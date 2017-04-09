@@ -1,5 +1,4 @@
-﻿using System;
-namespace Projector.Playground
+﻿namespace Projector.Playground
 {
     public class Person
     {

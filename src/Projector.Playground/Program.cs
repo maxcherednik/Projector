@@ -1,7 +1,7 @@
 ﻿using Projector.Data.Tables;
-using Projector.Playground.Properties;
 using System;
-using Projector.Data;
+using Projector.Data.Filter;
+using Projector.Data.Projection;
 
 namespace Projector.Playground
 {
@@ -9,7 +9,7 @@ namespace Projector.Playground
     {
         static void Main (string [] args)
         {
-            var elementCount = Settings.Default.ElementCount;
+            var elementCount = 10;
 
             var personTable = new Table<Person> (elementCount);
 

@@ -1,12 +1,11 @@
 ﻿using NSubstitute;
-using NUnit.Framework;
 using Projector.Data.Filter;
 using Projector.Data.Test.Helpers;
 using System.Collections.Generic;
+using Xunit;
 
 namespace Projector.Data.Test.Filter
 {
-    [TestFixture]
     class FilterTest
     {
         private Filter<Client> _filter;
@@ -17,82 +16,76 @@ namespace Projector.Data.Test.Filter
 
         private IDataConsumer _filterConsumer;
 
-        [SetUp]
-        public void InitContext()
+        public FilterTest ()
         {
             _ids = new List<int> { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
-            _dataProviderSchema = Substitute.For<ISchema>();
+            _dataProviderSchema = Substitute.For<ISchema> ();
 
-            _dataProvider = Substitute.For<IDataProvider<Client>>();
+            _dataProvider = Substitute.For<IDataProvider<Client>> ();
 
-            _dataProviderUnsubscriber = Substitute.For<IDisconnectable>();
-            _dataProvider.AddConsumer(Arg.Any<IDataConsumer>()).Returns(_dataProviderUnsubscriber);
-            _dataProvider.AddConsumer(Arg.Do<IDataConsumer>(x =>
-            {
-                x.OnSchema(_dataProviderSchema);
-                x.OnAdd(_ids);
-                x.OnSyncPoint();
+            _dataProviderUnsubscriber = Substitute.For<IDisconnectable> ();
+            _dataProvider.AddConsumer (Arg.Any<IDataConsumer> ()).Returns (_dataProviderUnsubscriber);
+            _dataProvider.AddConsumer (Arg.Do<IDataConsumer> (x => {
+                x.OnSchema (_dataProviderSchema);
+                x.OnAdd (_ids);
+                x.OnSyncPoint ();
             }));
 
 
-            _filterConsumer = Substitute.For<IDataConsumer>();
+            _filterConsumer = Substitute.For<IDataConsumer> ();
 
-            _filter = new Filter<Client>(_dataProvider, x => true);
+            _filter = new Filter<Client> (_dataProvider, x => true);
         }
 
-        [Test]
-        public void InitFilterTest()
+        [Fact]
+        public void InitFilterTest ()
         {
-            _dataProvider.Received(1).AddConsumer(_filter);
+            _dataProvider.Received (1).AddConsumer (_filter);
         }
 
 
-        [Test]
-        public void ChangeFilterTest()
+        [Fact]
+        public void ChangeFilterTest ()
         {
-            _dataProvider.ClearReceivedCalls();
-            _filter.ChangeFilter(x => true);
+            _dataProvider.ClearReceivedCalls ();
+            _filter.ChangeFilter (x => true);
 
-            _dataProviderUnsubscriber.Received(1).Dispose();
-            _dataProvider.Received(1).AddConsumer(_filter);
+            _dataProviderUnsubscriber.Received (1).Dispose ();
+            _dataProvider.Received (1).AddConsumer (_filter);
         }
 
-        [Test]
-        public void FilterAsProviderTest()
+        [Fact]
+        public void FilterAsProviderTest ()
         {
             // set up
-            var filteredIds = new List<int>();
-            _filterConsumer.OnAdd(Arg.Do<IList<int>>(ids => filteredIds.AddRange(ids)));
+            var filteredIds = new List<int> ();
+            _filterConsumer.OnAdd (Arg.Do<IList<int>> (filteredIds.AddRange));
 
             // call
-            _filter.AddConsumer(_filterConsumer);
+            _filter.AddConsumer (_filterConsumer);
 
             // check
-            _filterConsumer.Received(1).OnSchema(_dataProviderSchema);
-            Assert.AreEqual(10, filteredIds.Count);
+            _filterConsumer.Received (1).OnSchema (_dataProviderSchema);
+            Assert.Equal (10, filteredIds.Count);
 
 
-            _dataProvider.ClearReceivedCalls();
+            _dataProvider.ClearReceivedCalls ();
             // set up
-            _filterConsumer.OnDelete(Arg.Do<IList<int>>(ids =>
-            {
-                foreach (var id in ids)
-                {
-                    filteredIds.Remove(id);
+            _filterConsumer.OnDelete (Arg.Do<IList<int>> (ids => {
+                foreach (var id in ids) {
+                    filteredIds.Remove (id);
                 }
             }));
 
             // call
-            _filter.ChangeFilter(x => false);
+            _filter.ChangeFilter (x => false);
 
             // check
-            _dataProviderUnsubscriber.Received(1).Dispose();
-            _dataProvider.Received(1).AddConsumer(_filter);
+            _dataProviderUnsubscriber.Received (1).Dispose ();
+            _dataProvider.Received (1).AddConsumer (_filter);
 
-            Assert.AreEqual(0, filteredIds.Count);
+            Assert.Equal (0, filteredIds.Count);
         }
-
-
     }
 }
