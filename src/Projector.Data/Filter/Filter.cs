@@ -21,10 +21,12 @@ namespace Projector.Data.Filter
         {
             _filterCriteria = filterCriteria;
             _subscription.Dispose();
+
             foreach (var id in UsedIds)
             {
                 RemoveId(id);
             }
+
             _subscription = _sourceDataProvider.AddConsumer(this);
             FireChanges();
         }

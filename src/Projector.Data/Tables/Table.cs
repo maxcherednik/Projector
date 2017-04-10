@@ -30,6 +30,7 @@ namespace Projector.Data.Tables
 
         public void RemoveRow(int rowIndex)
         {
+            _schema.Remove(rowIndex);
             RemoveId(rowIndex);
         }
 

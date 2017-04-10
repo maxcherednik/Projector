@@ -6,6 +6,8 @@ namespace Projector.Data.Tables
         void SetCurrentRow(int rowId);
 
         void EnsureCapacity(int rowId);
+
+        void CleanOldValue(int rowId);
     }
 
     public interface IWritableField<TData> : IField<TData>, IWritableField

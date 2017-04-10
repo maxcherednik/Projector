@@ -6,37 +6,24 @@ namespace Projector.Data.Tables
     public class Field<TData> : IField<TData>, IWritableField<TData>
     {
         private int _id;
+
         private List<TData> _data;
-        private readonly string _name;
 
         public Field(List<TData> data, string name)
         {
             _data = data;
-            _name = name;
+            Name = name;
         }
 
-        public Type DataType
-        {
-            get { return typeof(TData); }
-        }
+        public Type DataType => typeof(TData);
 
-        public TData Value
-        {
-            get
-            {
-                return _data[_id];
-            }
-        }
+        public TData Value => _data[_id];
+
+        public string Name { get; }
 
         void IWritableField<TData>.SetValue(TData value)
         {
             _data[_id] = value;
-        }
-
-
-        public string Name
-        {
-            get { return _name; }
         }
 
         public void SetCurrentRow(int rowId)
@@ -44,13 +31,17 @@ namespace Projector.Data.Tables
             _id = rowId;
         }
 
-
         public void EnsureCapacity(int rowId)
         {
             if (rowId >= _data.Count)
             {
                 _data.Add(default(TData));
             }
+        }
+
+        public void CleanOldValue(int rowId)
+        {
+            _data[rowId] = default(TData);
         }
     }
 }

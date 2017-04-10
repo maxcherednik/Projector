@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Projector.Data.Tables
 {
@@ -9,6 +10,8 @@ namespace Projector.Data.Tables
         private readonly List<IWritableField> _columnList;
         private readonly int _capacity;
 
+        private readonly HashSet<int> _freeRows;
+
         private int _currentRowIndex = -1;
 
         public Schema(int capacity)
@@ -16,13 +19,13 @@ namespace Projector.Data.Tables
             _capacity = capacity;
             _data = new Dictionary<string, IWritableField>();
             _columnList = new List<IWritableField>();
+            _freeRows = new HashSet<int>();
         }
 
         public IReadOnlyList<IField> Columns
         {
             get { return _columnList; }
         }
-
 
         public IField<T> GetField<T>(int id, string name)
         {
@@ -31,7 +34,6 @@ namespace Projector.Data.Tables
             {
                 field.SetCurrentRow(id);
                 return (IField<T>)field;
-
             }
 
             throw new InvalidOperationException("Can't find column name: '" + name + "'");
@@ -44,7 +46,6 @@ namespace Projector.Data.Tables
             {
                 field.SetCurrentRow(id);
                 return (IWritableField<T>)field;
-
             }
 
             throw new InvalidOperationException("Can't find column name: '" + name + "'");
@@ -59,13 +60,31 @@ namespace Projector.Data.Tables
 
         public int GetNewRowId()
         {
-            _currentRowIndex++;
-            foreach (var writableField in _columnList)
+            if (_freeRows.Count > 0)
             {
-                writableField.EnsureCapacity(_currentRowIndex);
+                var oldRowIndex = _freeRows.First();
+                _freeRows.Remove(oldRowIndex);
+                foreach (var writableField in _columnList)
+                {
+                    writableField.CleanOldValue(oldRowIndex);
+                }
+                return oldRowIndex;
             }
+            else
+            {
+                _currentRowIndex++;
+                foreach (var writableField in _columnList)
+                {
+                    writableField.EnsureCapacity(_currentRowIndex);
+                }
 
-            return _currentRowIndex;
+                return _currentRowIndex;
+            }
+        }
+
+        public void Remove(int rowIndex)
+        {
+            _freeRows.Add(rowIndex);
         }
     }
 }

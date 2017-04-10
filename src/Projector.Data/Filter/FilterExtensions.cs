@@ -5,9 +5,9 @@ namespace Projector.Data.Filter
 {
     public static class FilterExtensions
     {
-        public static Filter<Tsource> Where<Tsource> (this IDataProvider<Tsource> source, Expression<Func<Tsource, bool>> filterExpression)
+        public static Filter<TSource> Where<TSource> (this IDataProvider<TSource> source, Expression<Func<TSource, bool>> filterExpression)
         {
-            return new Filter<Tsource> (source, filterExpression);
+            return new Filter<TSource> (source, filterExpression);
         }
     }
 }
