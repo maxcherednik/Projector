@@ -14,6 +14,7 @@ namespace Projector.Data.Test.Filter
             var filteredData = mockDataProvider.Where (x => x.Age > 5);
 
             mockDataProvider.Received (1).AddConsumer (filteredData);
+            mockDataProvider.DidNotReceive().RemoveConsumer(Arg.Any<IDataConsumer> ());
 
             Assert.IsType<Filter<Person>> (filteredData);
         }

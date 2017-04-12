@@ -1,4 +1,5 @@
 using System.Linq;
+using NSubstitute;
 using Projector.Data.GroupBy;
 using Projector.Data.Tables;
 using Xunit;
@@ -10,9 +11,12 @@ namespace Projector.Data.Test.GroupBy
         [Fact]
         public void CreateGrouByTest()
         {
-            var personTable = new Table<Person>();
+            var mockDataProvider = Substitute.For<IDataProvider<Person>>();
 
-            personTable.GroupBy(person => person.Name, (key, persons) => new { PersonName = key, PersonMaxAge = persons.Max(p => p.Age) });
+            var groupBy = mockDataProvider.GroupBy(person => person.Name, (key, persons) => new { PersonName = key, PersonMaxAge = persons.Max(p => p.Age) });
+
+            mockDataProvider.Received(1).AddConsumer(groupBy);
+            mockDataProvider.DidNotReceive().RemoveConsumer(Arg.Any<IDataConsumer>());
         }
     }
 }

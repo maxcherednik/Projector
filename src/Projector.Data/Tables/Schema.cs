@@ -84,7 +84,15 @@ namespace Projector.Data.Tables
 
         public void Remove(int rowIndex)
         {
-            _freeRows.Add(rowIndex);
+            if (rowIndex < 0 || rowIndex > _currentRowIndex)
+            {
+                throw new ArgumentOutOfRangeException(nameof(rowIndex), rowIndex, "Index was out of range. Must be non-negative and less than the size of the collection");
+            }
+
+            if (!_freeRows.Add(rowIndex))
+            {
+                throw new ArgumentException("Row id " + rowIndex + " already removed");
+            }
         }
     }
 }
