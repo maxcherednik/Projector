@@ -2,8 +2,10 @@
 {
     public interface IWritebleSchema : ISchema
     {
-        IWritableField<T> GetWritableField<T>(int id, string name);
+        IWritableField<T> GetWritableField<T>(string name);
+
         int GetNewRowId();
+
         void Remove(int rowIndex);
     }
 }

@@ -7,7 +7,6 @@ namespace Projector.Data.Projection
         private ISchema _schema;
         private readonly string _name;
         private readonly Func<ISchema, int, TData> _fieldAccessor;
-        private int _id;
 
         public ProjectedField(string name, Func<ISchema, int, TData> fieldAccessor)
         {
@@ -20,16 +19,10 @@ namespace Projector.Data.Projection
             _schema = schema;
         }
 
-        public void SetCurrentRow(int id)
+        public TData GetValue(int rowId)
         {
-            _id = id;
+            return _fieldAccessor(_schema, rowId); 
         }
-
-        public TData Value
-        {
-            get { return _fieldAccessor(_schema, _id); }
-        }
-
 
         public Type DataType
         {

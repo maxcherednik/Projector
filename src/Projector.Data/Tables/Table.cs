@@ -17,8 +17,8 @@ namespace Projector.Data.Tables
 
         public void Set<T>(int rowIndex, string name, T value)
         {
-            var writableField = _schema.GetWritableField<T>(rowIndex, name);
-            writableField.SetValue(value);
+            var writableField = _schema.GetWritableField<T>(name);
+            writableField.SetValue(rowIndex,value);
         }
 
         public int NewRow()

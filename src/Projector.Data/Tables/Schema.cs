@@ -27,24 +27,22 @@ namespace Projector.Data.Tables
             get { return _columnList; }
         }
 
-        public IField<T> GetField<T>(int id, string name)
+        public IField<T> GetField<T>(string name)
         {
             IWritableField field;
             if (_data.TryGetValue(name, out field))
             {
-                field.SetCurrentRow(id);
                 return (IField<T>)field;
             }
 
             throw new InvalidOperationException("Can't find column name: '" + name + "'");
         }
 
-        public IWritableField<T> GetWritableField<T>(int id, string name)
+        public IWritableField<T> GetWritableField<T>(string name)
         {
             IWritableField field;
             if (_data.TryGetValue(name, out field))
             {
-                field.SetCurrentRow(id);
                 return (IWritableField<T>)field;
             }
 

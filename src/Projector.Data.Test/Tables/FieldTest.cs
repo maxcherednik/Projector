@@ -21,32 +21,28 @@ namespace Projector.Data.Test.Tables
             var field = new Field<int>(new List<int>(), "column1");
 
             field.EnsureCapacity(1);
-            field.SetCurrentRow(0);
 
             // before set should be default of int
-            Assert.Equal(0, field.Value);
+            Assert.Equal(0, field.GetValue(0));
 
             var writabelIntField = (IWritableField<int>)field;
-            writabelIntField.SetValue(123);
+            writabelIntField.SetValue(0, 123);
 
-            Assert.Equal(123, field.Value);
+            Assert.Equal(123, field.GetValue(0));
 
             field.EnsureCapacity(2);
 
             // after we ensure capacity, current row and it's value should be the same
-            Assert.Equal(123, field.Value);
+            Assert.Equal(123, field.GetValue(0));
 
-            field.SetCurrentRow(1);
 
             // before set should be default of int
-            Assert.Equal(0, field.Value);
+            Assert.Equal(0, field.GetValue(1));
 
             writabelIntField.CleanOldValue(0);
 
-            field.SetCurrentRow(0);
-
             // after we clean it should be default of int
-            Assert.Equal(0, field.Value);
+            Assert.Equal(0, field.GetValue(0));
         }
     }
 }

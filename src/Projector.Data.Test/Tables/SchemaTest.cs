@@ -75,22 +75,22 @@ namespace Projector.Data.Test.Tables
             schema.GetNewRowId();
             schema.GetNewRowId();
 
-            var column1Filed = schema.GetWritableField<int>(1, "Column1");
-            column1Filed.SetValue(23);
+            var column1Filed = schema.GetWritableField<int>("Column1");
+            column1Filed.SetValue(1,23);
 
-            var column2Filed = schema.GetWritableField<string>(1, "Column2");
-            column2Filed.SetValue("SomeStringValue");
+            var column2Filed = schema.GetWritableField<string>("Column2");
+            column2Filed.SetValue(1,"SomeStringValue");
 
             schema.Remove(1);
 
             schema.GetNewRowId();
 
             // check
-            column1Filed = schema.GetWritableField<int>(1, "Column1");
-            Assert.Equal(0, column1Filed.Value);
+            column1Filed = schema.GetWritableField<int>("Column1");
+            Assert.Equal(0, column1Filed.GetValue(1));
 
-            column2Filed = schema.GetWritableField<string>(1, "Column2");
-            Assert.Null(column2Filed.Value);
+            column2Filed = schema.GetWritableField<string>( "Column2");
+            Assert.Null(column2Filed.GetValue(1));
         }
 
         [Fact]
@@ -133,10 +133,10 @@ namespace Projector.Data.Test.Tables
 
             schema.GetNewRowId();
 
-            var column1Filed = schema.GetWritableField<int>(0, "Column1");
-            column1Filed.SetValue(23);
+            var column1Filed = schema.GetWritableField<int>("Column1");
+            column1Filed.SetValue(0,23);
 
-            Assert.Equal(23, column1Filed.Value);
+            Assert.Equal(23, column1Filed.GetValue(0));
         }
 
         [Fact]
@@ -148,7 +148,7 @@ namespace Projector.Data.Test.Tables
 
             schema.GetNewRowId();
 
-            Assert.Throws<InvalidCastException>(() => schema.GetWritableField<string>(1, "Column1"));
+            Assert.Throws<InvalidCastException>(() => schema.GetWritableField<string>("Column1"));
         }
     }
 }

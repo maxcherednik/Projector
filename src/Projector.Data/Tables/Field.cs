@@ -5,8 +5,6 @@ namespace Projector.Data.Tables
 {
     public class Field<TData> : IField<TData>, IWritableField<TData>
     {
-        private int _id;
-
         private List<TData> _data;
 
         public Field(List<TData> data, string name)
@@ -17,18 +15,16 @@ namespace Projector.Data.Tables
 
         public Type DataType => typeof(TData);
 
-        public TData Value => _data[_id];
+        public TData GetValue(int rowId)
+        {
+            return _data[rowId];
+        }
 
         public string Name { get; }
 
-        void IWritableField<TData>.SetValue(TData value)
+        void IWritableField<TData>.SetValue(int rowId, TData value)
         {
-            _data[_id] = value;
-        }
-
-        public void SetCurrentRow(int rowId)
-        {
-            _id = rowId;
+            _data[rowId] = value;
         }
 
         public void EnsureCapacity(int rowId)

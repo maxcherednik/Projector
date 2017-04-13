@@ -6,7 +6,6 @@ namespace Projector.Data.Test.Join
 {
     public class JoinExtensionTest
     {
-        [Fact]
         public void CreateJoinTest()
         {
             var leftTable = new Table<Person>();
@@ -16,7 +15,6 @@ namespace Projector.Data.Test.Join
             Assert.IsType<Join<Person, Person, string, dynamic>>(joinedResult);
         }
 
-        [Fact]
         public void CreateLeftJoinTest()
         {
             var leftTable = new Table<Person>();
@@ -27,7 +25,6 @@ namespace Projector.Data.Test.Join
             Assert.IsType<Join<Person, Person, string, dynamic>>(joinedResult);
         }
 
-        [Fact]
         public void CreateRightJoinTest()
         {
             var leftTable = new Table<Person>();
