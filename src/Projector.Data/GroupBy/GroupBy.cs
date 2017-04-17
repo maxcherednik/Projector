@@ -12,17 +12,17 @@ namespace Projector.Data.GroupBy
             _subscription = sourceDataProvider.AddConsumer(this);
         }
 
-        public void OnAdd(IList<int> ids)
+        public void OnAdd(IReadOnlyCollection<int> ids)
         {
             throw new NotImplementedException();
         }
 
-        public void OnUpdate(IList<int> ids, IList<IField> updatedFields)
+        public void OnUpdate(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> updatedFields)
         {
             throw new NotImplementedException();
         }
 
-        public void OnDelete(IList<int> ids)
+        public void OnDelete(IReadOnlyCollection<int> ids)
         {
             throw new NotImplementedException();
         }

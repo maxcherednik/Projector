@@ -42,7 +42,34 @@ namespace Projector.Data.Test.Filter
         [Fact]
         public void InitFilterTest()
         {
-            _dataProvider.Received(1).AddConsumer(_filter);
+            var dataProvider = Substitute.For<IDataProvider<Client>>();
+
+            var filterConsumer = Substitute.For<IDataConsumer>();
+
+            var filter = new Filter<Client>(_dataProvider, x => true);
+
+            dataProvider.Received(1).AddConsumer(filter);
+        }
+
+        [Fact]
+        public void WhenFilterMatches()
+        {
+            var dataProvider = Substitute.For<IDataProvider<Client>>();
+
+            var filterConsumer = Substitute.For<IDataConsumer>();
+
+            var filter = new Filter<Client>(_dataProvider, x => x.Id > 2);
+
+            var field =Substitute.For<IField>();
+
+            var dataProviderSchema = Substitute.For<ISchema>();
+
+            dataProviderSchema.GetField<int>("Id").Returns(field);
+            
+            filter.OnSchema(dataProviderSchema);
+
+            filter.OnAdd(new List<int> { 1, 2 });
+
         }
 
         [Fact]
@@ -60,7 +87,7 @@ namespace Projector.Data.Test.Filter
         {
             // set up
             var filteredIds = new List<int>();
-            _filterConsumer.OnAdd(Arg.Do<IList<int>>(filteredIds.AddRange));
+            _filterConsumer.OnAdd(Arg.Do<IReadOnlyCollection<int>>(filteredIds.AddRange));
 
             // call
             _filter.AddConsumer(_filterConsumer);
@@ -72,7 +99,7 @@ namespace Projector.Data.Test.Filter
 
             _dataProvider.ClearReceivedCalls();
             // set up
-            _filterConsumer.OnDelete(Arg.Do<IList<int>>(ids =>
+            _filterConsumer.OnDelete(Arg.Do<IReadOnlyCollection<int>>(ids =>
             {
                 foreach (var id in ids)
                 {

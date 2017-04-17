@@ -26,7 +26,7 @@ namespace Projector.Data.Projection
             base.FireChanges();
         }
 
-        public void OnAdd(IList<int> ids)
+        public void OnAdd(IReadOnlyCollection<int> ids)
         {
             foreach (var id in ids)
             {
@@ -34,19 +34,20 @@ namespace Projector.Data.Projection
             }
         }
 
-        public void OnUpdate(IList<int> ids, IList<IField> updatedFields)
+        public void OnUpdate(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> updatedFields)
         {
-            throw new NotImplementedException();
+            foreach (var id in ids)
+            {
+                //Upda
+            }
         }
 
-        public void OnDelete(IList<int> ids)
+        public void OnDelete(IReadOnlyCollection<int> ids)
         {
             foreach (var id in ids)
             {
                 RemoveId(id);
             }
         }
-
-
     }
 }

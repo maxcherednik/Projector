@@ -12,17 +12,17 @@ namespace Projector.Data.Join
             _subscription = sourceDataProvider.AddConsumer(this);
         }
 
-        public void OnAdd(IList<int> ids)
+        public void OnAdd(IReadOnlyCollection<int> ids)
         {
             FireOnAdd(ids);
         }
 
-        public void OnUpdate(IList<int> ids, IList<IField> updatedFields)
+        public void OnUpdate(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> updatedFields)
         {
             FireOnUpdate(ids, updatedFields);
         }
 
-        public void OnDelete(IList<int> ids)
+        public void OnDelete(IReadOnlyCollection<int> ids)
         {
             FireOnDelete(ids);
         }
@@ -37,13 +37,13 @@ namespace Projector.Data.Join
             FireOnSyncPoint();
         }
 
-        public event Action<IList<int>> OnAdded;
-        public event Action<IList<int>, IList<IField>> OnUpdated;
-        public event Action<IList<int>> OnDeleted;
+        public event Action<IReadOnlyCollection<int>> OnAdded;
+        public event Action<IReadOnlyCollection<int>, IReadOnlyCollection<IField>> OnUpdated;
+        public event Action<IReadOnlyCollection<int>> OnDeleted;
         public event Action<ISchema> OnSchemaArrived;
         public event Action OnSyncPointArrived;
 
-        private void FireOnAdd(IList<int> ids)
+        private void FireOnAdd(IReadOnlyCollection<int> ids)
         {
             var handler = OnAdded;
             if (handler != null)
@@ -52,7 +52,7 @@ namespace Projector.Data.Join
             }
         }
 
-        private void FireOnDelete(IList<int> ids)
+        private void FireOnDelete(IReadOnlyCollection<int> ids)
         {
             var handler = OnDeleted;
             if (handler != null)
@@ -61,7 +61,7 @@ namespace Projector.Data.Join
             }
         }
 
-        private void FireOnUpdate(IList<int> ids, IList<IField> fields)
+        private void FireOnUpdate(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> fields)
         {
             var handler = OnUpdated;
             if (handler != null)

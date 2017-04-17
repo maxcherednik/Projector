@@ -30,9 +30,9 @@ namespace Projector.Data.Test.Tables
                 _mockDataConsumer.Received (1).OnSyncPoint ();
             });
 
-            _mockDataConsumer.DidNotReceive ().OnAdd (Arg.Any<IList<int>> ());
-            _mockDataConsumer.DidNotReceive ().OnUpdate (Arg.Any<IList<int>> (), Arg.Any<IList<IField>> ());
-            _mockDataConsumer.DidNotReceive ().OnDelete (Arg.Any<IList<int>> ());
+            _mockDataConsumer.DidNotReceive ().OnAdd (Arg.Any<IReadOnlyCollection<int>> ());
+            _mockDataConsumer.DidNotReceive ().OnUpdate (Arg.Any<IReadOnlyCollection<int>> (), Arg.Any<IReadOnlyCollection<IField>> ());
+            _mockDataConsumer.DidNotReceive ().OnDelete (Arg.Any<IReadOnlyCollection<int>> ());
         }
 
         [Fact]
@@ -54,12 +54,12 @@ namespace Projector.Data.Test.Tables
 
             Received.InOrder (() => {
                 _mockDataConsumer.Received (1).OnSchema (_mockSchema);
-                _mockDataConsumer.Received (1).OnAdd (Arg.Is<IList<int>> (x => idsToAdd.SequenceEqual (x)));
+                _mockDataConsumer.Received (1).OnAdd (Arg.Is<IReadOnlyCollection<int>> (x => idsToAdd.SequenceEqual (x)));
                 _mockDataConsumer.Received (1).OnSyncPoint ();
             });
 
-            _mockDataConsumer.DidNotReceive ().OnUpdate (Arg.Any<IList<int>> (), Arg.Any<IList<IField>> ());
-            _mockDataConsumer.DidNotReceive ().OnDelete (Arg.Any<IList<int>> ());
+            _mockDataConsumer.DidNotReceive ().OnUpdate (Arg.Any<IReadOnlyCollection<int>> (), Arg.Any<IReadOnlyCollection<IField>> ());
+            _mockDataConsumer.DidNotReceive ().OnDelete (Arg.Any<IReadOnlyCollection<int>> ());
         }
 
         [Fact]
@@ -72,9 +72,9 @@ namespace Projector.Data.Test.Tables
             _table.NewRow ();
 
             _mockDataConsumer.DidNotReceive ().OnSchema (Arg.Any<ISchema> ());
-            _mockDataConsumer.DidNotReceive ().OnAdd (Arg.Any<IList<int>> ());
-            _mockDataConsumer.DidNotReceive ().OnUpdate (Arg.Any<IList<int>> (), Arg.Any<IList<IField>> ());
-            _mockDataConsumer.DidNotReceive ().OnDelete (Arg.Any<IList<int>> ());
+            _mockDataConsumer.DidNotReceive ().OnAdd (Arg.Any<IReadOnlyCollection<int>> ());
+            _mockDataConsumer.DidNotReceive ().OnUpdate (Arg.Any<IReadOnlyCollection<int>> (), Arg.Any<IReadOnlyCollection<IField>> ());
+            _mockDataConsumer.DidNotReceive ().OnDelete (Arg.Any<IReadOnlyCollection<int>> ());
             _mockDataConsumer.DidNotReceive ().OnSyncPoint ();
         }
 
@@ -86,16 +86,16 @@ namespace Projector.Data.Test.Tables
 
             _mockDataConsumer.ClearReceivedCalls ();
 
-            _mockDataConsumer.OnAdd (Arg.Do<IList<int>> (list => args.AddRange (list)));
+            _mockDataConsumer.OnAdd (Arg.Do<IReadOnlyCollection<int>> (list => args.AddRange (list)));
 
             _table.NewRow ();
 
             _table.FireChanges ();
 
             _mockDataConsumer.DidNotReceive ().OnSchema (Arg.Any<ISchema> ());
-            _mockDataConsumer.Received (1).OnAdd (Arg.Any<IList<int>> ());
-            _mockDataConsumer.DidNotReceive ().OnUpdate (Arg.Any<IList<int>> (), Arg.Any<IList<IField>> ());
-            _mockDataConsumer.DidNotReceive ().OnDelete (Arg.Any<IList<int>> ());
+            _mockDataConsumer.Received (1).OnAdd (Arg.Any<IReadOnlyCollection<int>> ());
+            _mockDataConsumer.DidNotReceive ().OnUpdate (Arg.Any<IReadOnlyCollection<int>> (), Arg.Any<IReadOnlyCollection<IField>> ());
+            _mockDataConsumer.DidNotReceive ().OnDelete (Arg.Any<IReadOnlyCollection<int>> ());
             _mockDataConsumer.Received (1).OnSyncPoint ();
 
             Assert.Equal (1, args.Count);
@@ -114,9 +114,9 @@ namespace Projector.Data.Test.Tables
             _table.RemoveRow (0);
 
             _mockDataConsumer.DidNotReceive ().OnSchema (Arg.Any<ISchema> ());
-            _mockDataConsumer.DidNotReceive ().OnAdd (Arg.Any<IList<int>> ());
-            _mockDataConsumer.DidNotReceive ().OnUpdate (Arg.Any<IList<int>> (), Arg.Any<IList<IField>> ());
-            _mockDataConsumer.DidNotReceive ().OnDelete (Arg.Any<IList<int>> ());
+            _mockDataConsumer.DidNotReceive ().OnAdd (Arg.Any<IReadOnlyCollection<int>> ());
+            _mockDataConsumer.DidNotReceive ().OnUpdate (Arg.Any<IReadOnlyCollection<int>> (), Arg.Any<IReadOnlyCollection<IField>> ());
+            _mockDataConsumer.DidNotReceive ().OnDelete (Arg.Any<IReadOnlyCollection<int>> ());
             _mockDataConsumer.DidNotReceive ().OnSyncPoint ();
         }
 
@@ -133,16 +133,16 @@ namespace Projector.Data.Test.Tables
 
             _mockDataConsumer.ClearReceivedCalls ();
 
-            _mockDataConsumer.OnDelete (Arg.Do<IList<int>> (list => args.AddRange (list)));
+            _mockDataConsumer.OnDelete (Arg.Do<IReadOnlyCollection<int>> (list => args.AddRange (list)));
 
             _table.RemoveRow (0);
 
             _table.FireChanges ();
 
             _mockDataConsumer.DidNotReceive ().OnSchema (Arg.Any<ISchema> ());
-            _mockDataConsumer.DidNotReceive ().OnAdd (Arg.Any<IList<int>> ());
-            _mockDataConsumer.DidNotReceive ().OnUpdate (Arg.Any<IList<int>> (), Arg.Any<IList<IField>> ());
-            _mockDataConsumer.Received (1).OnDelete (Arg.Any<IList<int>> ());
+            _mockDataConsumer.DidNotReceive ().OnAdd (Arg.Any<IReadOnlyCollection<int>> ());
+            _mockDataConsumer.DidNotReceive ().OnUpdate (Arg.Any<IReadOnlyCollection<int>> (), Arg.Any<IReadOnlyCollection<IField>> ());
+            _mockDataConsumer.Received (1).OnDelete (Arg.Any<IReadOnlyCollection<int>> ());
             _mockDataConsumer.Received (1).OnSyncPoint ();
 
             Assert.Equal (1, args.Count);
@@ -159,9 +159,9 @@ namespace Projector.Data.Test.Tables
             _table.FireChanges ();
 
             _mockDataConsumer.DidNotReceive ().OnSchema (Arg.Any<ISchema> ());
-            _mockDataConsumer.DidNotReceive ().OnAdd (Arg.Any<IList<int>> ());
-            _mockDataConsumer.DidNotReceive ().OnUpdate (Arg.Any<IList<int>> (), Arg.Any<IList<IField>> ());
-            _mockDataConsumer.DidNotReceive ().OnDelete (Arg.Any<IList<int>> ());
+            _mockDataConsumer.DidNotReceive ().OnAdd (Arg.Any<IReadOnlyCollection<int>> ());
+            _mockDataConsumer.DidNotReceive ().OnUpdate (Arg.Any<IReadOnlyCollection<int>> (), Arg.Any<IReadOnlyCollection<IField>> ());
+            _mockDataConsumer.DidNotReceive ().OnDelete (Arg.Any<IReadOnlyCollection<int>> ());
             _mockDataConsumer.DidNotReceive ().OnSyncPoint ();
         }
 
@@ -181,9 +181,9 @@ namespace Projector.Data.Test.Tables
             _table.FireChanges (); // we are testing this one
 
             _mockDataConsumer.DidNotReceive ().OnSchema (Arg.Any<ISchema> ());
-            _mockDataConsumer.DidNotReceive ().OnAdd (Arg.Any<IList<int>> ());
-            _mockDataConsumer.DidNotReceive ().OnUpdate (Arg.Any<IList<int>> (), Arg.Any<IList<IField>> ());
-            _mockDataConsumer.DidNotReceive ().OnDelete (Arg.Any<IList<int>> ());
+            _mockDataConsumer.DidNotReceive ().OnAdd (Arg.Any<IReadOnlyCollection<int>> ());
+            _mockDataConsumer.DidNotReceive ().OnUpdate (Arg.Any<IReadOnlyCollection<int>> (), Arg.Any<IReadOnlyCollection<IField>> ());
+            _mockDataConsumer.DidNotReceive ().OnDelete (Arg.Any<IReadOnlyCollection<int>> ());
             _mockDataConsumer.DidNotReceive ().OnSyncPoint ();
         }
     }

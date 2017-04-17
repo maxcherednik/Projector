@@ -51,17 +51,17 @@ namespace Projector.Data.Join
             _leftSchema = schema;
         }
 
-        void _leftChangeTracker_OnUpdated(IList<int> arg1, IList<IField> arg2)
+        void _leftChangeTracker_OnUpdated(IReadOnlyCollection<int> arg1, IReadOnlyCollection<IField> arg2)
         {
             throw new System.NotImplementedException();
         }
 
-        void _leftChangeTracker_OnDeleted(IList<int> obj)
+        void _leftChangeTracker_OnDeleted(IReadOnlyCollection<int> obj)
         {
             throw new System.NotImplementedException();
         }
 
-        void _leftChangeTracker_OnAdded(IList<int> ids)
+        void _leftChangeTracker_OnAdded(IReadOnlyCollection<int> ids)
         {
             foreach (var id in ids)
             {
@@ -108,17 +108,17 @@ namespace Projector.Data.Join
             _rightSchema = schema;
         }
 
-        void _rightChangeTracker_OnUpdated(IList<int> arg1, IList<IField> arg2)
+        void _rightChangeTracker_OnUpdated(IReadOnlyCollection<int> arg1, IReadOnlyCollection<IField> arg2)
         {
             throw new System.NotImplementedException();
         }
 
-        void _rightChangeTracker_OnDeleted(IList<int> obj)
+        void _rightChangeTracker_OnDeleted(IReadOnlyCollection<int> obj)
         {
             throw new System.NotImplementedException();
         }
 
-        void _rightChangeTracker_OnAdded(IList<int> ids)
+        void _rightChangeTracker_OnAdded(IReadOnlyCollection<int> ids)
         {
             foreach (var id in ids)
             {

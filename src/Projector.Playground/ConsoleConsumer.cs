@@ -9,7 +9,7 @@ namespace Projector.Playground
         private int _rowCounter;
         private ISchema _schema;
 
-        public void OnAdd (IList<int> ids)
+        public void OnAdd (IReadOnlyCollection<int> ids)
         {
             _rowCounter += ids.Count;
             Console.WriteLine (DateTime.Now + " OnAdd arrived. Row count: " + ids.Count + " Total count: " + _rowCounter);
@@ -18,12 +18,12 @@ namespace Projector.Playground
             }
         }
 
-        public void OnUpdate (IList<int> ids, IList<IField> updatedFields)
+        public void OnUpdate (IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> updatedFields)
         {
             Console.WriteLine ("OnUpdate arrived");
         }
 
-        public void OnDelete (IList<int> ids)
+        public void OnDelete (IReadOnlyCollection<int> ids)
         {
             Console.WriteLine ("OnDelete arrived");
             foreach (var id in ids) {

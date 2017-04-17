@@ -41,7 +41,7 @@ namespace Projector.Data.Filter
             FireChanges();
         }
 
-        public void OnAdd(IList<int> ids)
+        public void OnAdd(IReadOnlyCollection<int> ids)
         {
             foreach (var id in ids)
             {
@@ -52,7 +52,7 @@ namespace Projector.Data.Filter
             }
         }
 
-        public void OnUpdate(IList<int> ids, IList<IField> updatedFields)
+        public void OnUpdate(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> updatedFields)
         {
             foreach (var id in ids)
             {
@@ -64,10 +64,17 @@ namespace Projector.Data.Filter
                 {
                     AddId(id);
                 }
+                else
+                {
+                    foreach (var updatedField in updatedFields)
+                    {
+                        UpdateId(id, updatedField);
+                    }
+                }
             }
         }
 
-        public void OnDelete(IList<int> ids)
+        public void OnDelete(IReadOnlyCollection<int> ids)
         {
             foreach (var id in ids)
             {

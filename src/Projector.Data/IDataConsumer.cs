@@ -17,20 +17,20 @@ namespace Projector.Data
         /// This method called when data provider wants to notify that some rows were added
         /// </summary>
         /// <param name="rowIds">List of row ids which were added to the data provider</param>
-        void OnAdd(IList<int> rowIds);
+        void OnAdd(IReadOnlyCollection<int> rowIds);
 
         /// <summary>
         /// This method called when data provider wants to notify that some rows were updated
         /// </summary>
         /// <param name="rowIds">List of row ids which were updated on the data provider</param>
         /// <param name="updatedFields">List of updated fields</param>
-        void OnUpdate(IList<int> rowIds, IList<IField> updatedFields);
+        void OnUpdate(IReadOnlyCollection<int> rowIds, IReadOnlyCollection<IField> updatedFields);
 
         /// <summary>
         /// This method called when data provider wants to notify that some rows were deleted
         /// </summary>
         /// <param name="rowIds">List of row ids which were deleted from the data provider</param>
-        void OnDelete(IList<int> rowIds);
+        void OnDelete(IReadOnlyCollection<int> rowIds);
 
         /// <summary>
         /// This method is used as a signal of batch processing
