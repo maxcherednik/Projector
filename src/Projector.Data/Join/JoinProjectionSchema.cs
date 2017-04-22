@@ -19,13 +19,22 @@ namespace Projector.Data.Join
 
         public IField<T> GetField<T>(string name)
         {
-            IField projectionField;
-            if (_data.TryGetValue(name, out projectionField))
+            if (_data.TryGetValue(name, out IField projectionField))
             {
                 var projectedFieldImpl = (JoinProjectedField<T>)projectionField;
                 projectedFieldImpl.SetLeftSchema(_sourceSchema);
                 projectedFieldImpl.SetRightSchema(_sourceSchema);
                 return projectedFieldImpl;
+            }
+
+            throw new InvalidOperationException("Can't find column name: '" + name + "'");
+        }
+
+        public IField GetFieldMeta(string name)
+        {
+            if (_data.TryGetValue(name, out IField field))
+            {
+                return field;
             }
 
             throw new InvalidOperationException("Can't find column name: '" + name + "'");

@@ -6,17 +6,22 @@ namespace Projector.Data.Projection
     public class Projection : DataProviderBase, IDataConsumer
     {
         private IDictionary<string, IField> _projectionFields;
+        private IDictionary<string, ISet<string>> _oldFieldNamesToNewFieldNamesMapping;
+
         private IDisconnectable _subscription;
 
-        public Projection(IDataProvider sourceDataProvider, IDictionary<string, IField> projectionFields)
+        private HashSet<IField> _currentUpdatedFields;
+
+        public Projection(IDataProvider sourceDataProvider, Tuple<IDictionary<string, ISet<string>>, IDictionary<string, IField>> projectionFieldsMeta)
         {
-            _projectionFields = projectionFields;
+            _currentUpdatedFields = new HashSet<IField>();
+            _oldFieldNamesToNewFieldNamesMapping = projectionFieldsMeta.Item1;
+            _projectionFields = projectionFieldsMeta.Item2;
             _subscription = sourceDataProvider.AddConsumer(this);
         }
 
         public void OnSchema(ISchema schema)
         {
-
             var projectedSchema = new ProjectionSchema(schema, _projectionFields);
             SetSchema(projectedSchema);
         }
@@ -36,9 +41,27 @@ namespace Projector.Data.Projection
 
         public void OnUpdate(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> updatedFields)
         {
-            foreach (var id in ids)
+            _currentUpdatedFields.Clear();
+            foreach (var updatedField in updatedFields)
             {
-                //Upda
+                if (_oldFieldNamesToNewFieldNamesMapping.TryGetValue(updatedField.Name, out ISet<string> newFieldNames))
+                {
+                    foreach (var newFieldName in newFieldNames)
+                    {
+                        _currentUpdatedFields.Add(Schema.GetFieldMeta(newFieldName));
+                    }
+                }
+            }
+
+            if (_currentUpdatedFields.Count > 0)
+            {
+                foreach (var id in ids)
+                {
+                    foreach (var updatedField in _currentUpdatedFields)
+                    {
+                        UpdateId(id, updatedField);
+                    }
+                }
             }
         }
 

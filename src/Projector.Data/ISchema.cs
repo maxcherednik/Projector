@@ -19,5 +19,12 @@ namespace Projector.Data
         /// <param name="name">Name of the column</param>
         /// <returns>Returns instance of <see cref="IField{T}" /> </returns>
         IField<T> GetField<T>(string name);
+
+        /// <summary>
+        /// Returns instance of <see cref="IField" />
+        /// </summary>
+        /// <param name="name">Name of the column</param>
+        /// <returns>Returns instance of <see cref="IField" /> </returns>
+        IField GetFieldMeta(string name);
     }
 }

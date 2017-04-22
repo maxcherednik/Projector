@@ -29,8 +29,7 @@ namespace Projector.Data.Tables
 
         public IField<T> GetField<T>(string name)
         {
-            IWritableField field;
-            if (_data.TryGetValue(name, out field))
+            if (_data.TryGetValue(name, out IWritableField field))
             {
                 return (IField<T>)field;
             }
@@ -40,8 +39,7 @@ namespace Projector.Data.Tables
 
         public IWritableField<T> GetWritableField<T>(string name)
         {
-            IWritableField field;
-            if (_data.TryGetValue(name, out field))
+            if (_data.TryGetValue(name, out IWritableField field))
             {
                 return (IWritableField<T>)field;
             }
@@ -91,6 +89,16 @@ namespace Projector.Data.Tables
             {
                 throw new ArgumentException("Row id " + rowIndex + " already removed");
             }
+        }
+
+        public IField GetFieldMeta(string name)
+        {
+            if (_data.TryGetValue(name, out IWritableField field))
+            {
+                return field;
+            }
+
+            throw new InvalidOperationException("Can't find column name: '" + name + "'");
         }
     }
 }

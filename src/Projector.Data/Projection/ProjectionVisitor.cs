@@ -10,7 +10,10 @@ namespace Projector.Data.Projection
         private ParameterExpression _schemaParameter;
         private ParameterExpression _idParameter;
         private MethodInfo _getFieldMethodInfo;
-        private Dictionary<string, IField> _projectedFields;
+        private IDictionary<string, IField> _projectedFields;
+        private IDictionary<string, ISet<string>> _oldFieldNamesToNewFieldNamesMapping;
+        private string _currentProjectedName;
+        private bool _skip;
 
         public ProjectionVisitor()
         {
@@ -19,29 +22,21 @@ namespace Projector.Data.Projection
 
             _getFieldMethodInfo = typeof(ISchema).GetTypeInfo().GetDeclaredMethod("GetField");
             _projectedFields = new Dictionary<string, IField>();
+            _oldFieldNamesToNewFieldNamesMapping = new Dictionary<string, ISet<string>>();
         }
 
-        public IDictionary<string, IField> GenerateProjection<Tsource, TDest>(Expression<Func<Tsource, TDest>> transformerExpression)
+        public Tuple<IDictionary<string, ISet<string>>, IDictionary<string, IField>> GenerateProjection<Tsource, TDest>(Expression<Func<Tsource, TDest>> transformerExpression)
         {
             _projectedFields.Clear();
 
             Visit(transformerExpression);
 
-            return _projectedFields;
-        }
-
-        protected override MemberAssignment VisitMemberAssignment(MemberAssignment node)
-        {
-            var projectedFieldName = node.Member.Name;
-            var typeOfvalue = node.Expression.Type;
-
-            GenerateField(projectedFieldName, typeOfvalue, node.Expression);
-
-            return node;
+            return Tuple.Create(_oldFieldNamesToNewFieldNamesMapping, _projectedFields);
         }
 
         private void GenerateField(string projectedFieldName, Type typeOfValue, Expression expression)
         {
+            _currentProjectedName = projectedFieldName;
             var projectedFieldType = typeof(ProjectedField<>).MakeGenericType(typeOfValue);
 
             var typeOfFunc = typeof(Func<,,>).MakeGenericType(typeof(ISchema), typeof(int), typeOfValue);
@@ -68,13 +63,28 @@ namespace Projector.Data.Projection
                 }
             }
 
+            _skip = true;
+
             return base.VisitNew(node);
         }
 
         protected override Expression VisitMember(MemberExpression node)
         {
+            if(_skip)
+            {
+                return base.VisitMember(node);
+            }
+
+            var oldFieldName = node.Member.Name;
+            if (!_oldFieldNamesToNewFieldNamesMapping.TryGetValue(oldFieldName, out ISet<string> newFieldNames))
+            {
+                newFieldNames = new HashSet<string>();
+                _oldFieldNamesToNewFieldNamesMapping.Add(oldFieldName, newFieldNames);
+            }
+            newFieldNames.Add(_currentProjectedName);
+
             var genericMethodInfo = _getFieldMethodInfo.MakeGenericMethod(node.Type);
-            var fieldAccessExpression = Expression.Call(_schemaParameter, genericMethodInfo, Expression.Constant(node.Member.Name, typeof(string)));
+            var fieldAccessExpression = Expression.Call(_schemaParameter, genericMethodInfo, Expression.Constant(oldFieldName, typeof(string)));
 
             var valueAccessMemberInfo = genericMethodInfo.ReturnType.GetTypeInfo().GetDeclaredMethod("GetValue");
 

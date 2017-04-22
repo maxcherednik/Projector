@@ -7,19 +7,23 @@ namespace Projector.Data.Filter
     {
         private Func<ISchema, int, bool> _filterCriteria;
 
+        private HashSet<string> _fieldsUsedInFilter;
+
         private IDisconnectable _subscription;
         private IDataProvider _sourceDataProvider;
 
-        public Filter(IDataProvider sourceDataProvider, Func<ISchema, int, bool> filterCriteria)
+        public Filter(IDataProvider sourceDataProvider, Tuple<HashSet<string>, Func<ISchema, int, bool>> filterCriteriaMeta)
         {
-            _filterCriteria = filterCriteria;
+            _fieldsUsedInFilter = filterCriteriaMeta.Item1;
+            _filterCriteria = filterCriteriaMeta.Item2;
             _sourceDataProvider = sourceDataProvider;
             _subscription = sourceDataProvider.AddConsumer(this);
         }
 
-        public void ChangeFilter(Func<ISchema, int, bool> filterCriteria)
+        public void ChangeFilter(Tuple<HashSet<string>, Func<ISchema, int, bool>> filterCriteriaMeta)
         {
-            _filterCriteria = filterCriteria;
+            _fieldsUsedInFilter = filterCriteriaMeta.Item1;
+            _filterCriteria = filterCriteriaMeta.Item2;
             _subscription.Dispose();
 
             foreach (var id in UsedIds)
@@ -54,21 +58,43 @@ namespace Projector.Data.Filter
 
         public void OnUpdate(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> updatedFields)
         {
-            foreach (var id in ids)
+            // if fields, which are used in the filter, updated, we need to to recheck filter criteria
+            if (FieldsInUse(updatedFields))
             {
-                if (UsedIds.Contains(id) && !_filterCriteria(Schema, id))
+                foreach (var id in ids)
                 {
-                    RemoveId(id);
-                }
-                else if (!UsedIds.Contains(id) && _filterCriteria(Schema, id))
-                {
-                    AddId(id);
-                }
-                else
-                {
-                    foreach (var updatedField in updatedFields)
+                    var usedBefore = UsedIds.Contains(id);
+                    var usedAfter = _filterCriteria(Schema, id);
+
+                    if (usedBefore && !usedAfter)
                     {
-                        UpdateId(id, updatedField);
+                        RemoveId(id);
+                    }
+                    else if (!usedBefore && usedAfter)
+                    {
+                        AddId(id);
+                    }
+                    else if (usedBefore && usedAfter)
+                    {
+                        foreach (var updatedField in updatedFields)
+                        {
+                            UpdateId(id, updatedField);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // if fields, which are not used in the filter, updated, we need to propagate set of ids,
+                // which were checked before without rechecking filter criteria
+                foreach (var id in ids)
+                {
+                    if (UsedIds.Contains(id))
+                    {
+                        foreach (var updatedField in updatedFields)
+                        {
+                            UpdateId(id, updatedField);
+                        }
                     }
                 }
             }
@@ -83,6 +109,19 @@ namespace Projector.Data.Filter
                     RemoveId(id);
                 }
             }
+        }
+
+        private bool FieldsInUse(IReadOnlyCollection<IField> updatedFields)
+        {
+            foreach (var updatedField in updatedFields)
+            {
+                if (_fieldsUsedInFilter.Contains(updatedField.Name))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

@@ -32,7 +32,7 @@ namespace Projector.Data.Test.Filter
 
             //call
             Expression<Func<Person, bool>> filterExpression = person => person.Age > 5;
-            var filter = new FilterVisitor().GenerateFilter(filterExpression);
+            var filter = new FilterVisitor().GenerateFilter(filterExpression).Item2;
 
             //check
             Assert.False(filter(_mockSchema, 1));
@@ -48,7 +48,7 @@ namespace Projector.Data.Test.Filter
 
             // call
             Expression<Func<Person, bool>> filterExpression = person => person.Age > 5 && person.Age < 10;
-            var filter = new FilterVisitor().GenerateFilter(filterExpression);
+            var filter = new FilterVisitor().GenerateFilter(filterExpression).Item2;
 
             //check
             Assert.True(filter(_mockSchema, 1));
@@ -73,7 +73,7 @@ namespace Projector.Data.Test.Filter
 
             //call
             Expression<Func<Person, bool>> filterExpression = person => person.Name == "Max";
-            var filter = new FilterVisitor().GenerateFilter(filterExpression);
+            var filter = new FilterVisitor().GenerateFilter(filterExpression).Item2;
 
             //check
             Assert.True(filter(_mockSchema, 1));
@@ -90,7 +90,7 @@ namespace Projector.Data.Test.Filter
 
             //call
             Expression<Func<Person, bool>> filterExpression = person => person.Name == "Max" && person.Age == 6 && (person.Name + person.Age).StartsWith("M");
-            var filter = new FilterVisitor().GenerateFilter(filterExpression);
+            var filter = new FilterVisitor().GenerateFilter(filterExpression).Item2;
 
             //check
             Assert.True(filter(_mockSchema, 1));

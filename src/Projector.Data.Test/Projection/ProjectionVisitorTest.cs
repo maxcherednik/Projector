@@ -32,7 +32,7 @@ namespace Projector.Data.Test.Projection
         {
             //call
             Expression<Func<Person, PersonProjected>> filterExpression = person => new PersonProjected { Name = person.Name, NameAge = person.Name + person.Age };
-            var projectedFields = new ProjectionVisitor ().GenerateProjection (filterExpression);
+            var projectedFields = new ProjectionVisitor ().GenerateProjection (filterExpression).Item2;
 
             //check
 

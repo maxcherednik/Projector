@@ -12,7 +12,12 @@ namespace Projector.Data.Test.GroupBy
         {
             var mockDataProvider = Substitute.For<IDataProvider<Person>>();
 
-            var groupBy = mockDataProvider.GroupBy(person => person.Name, (key, persons) => new { PersonName = key, PersonMaxAge = persons.Max(p => p.Age) });
+            var groupBy = mockDataProvider.GroupBy(person => person.Name,
+                                                    (key, persons) => new
+                                                    {
+                                                        PersonName = key,
+                                                        PersonMaxAge = persons.Max(p => p.Age)
+                                                    });
 
             mockDataProvider.Received(1).AddConsumer(groupBy);
             mockDataProvider.DidNotReceive().RemoveConsumer(Arg.Any<IDataConsumer>());
