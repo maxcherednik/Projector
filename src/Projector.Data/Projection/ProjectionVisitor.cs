@@ -34,6 +34,16 @@ namespace Projector.Data.Projection
             return Tuple.Create(_oldFieldNamesToNewFieldNamesMapping, _projectedFields);
         }
 
+        protected override MemberAssignment VisitMemberAssignment(MemberAssignment node)
+        {
+            var projectedFieldName = node.Member.Name;
+            var typeOfvalue = node.Expression.Type;
+
+            GenerateField(projectedFieldName, typeOfvalue, node.Expression);
+
+            return node;
+        }
+
         private void GenerateField(string projectedFieldName, Type typeOfValue, Expression expression)
         {
             _currentProjectedName = projectedFieldName;
@@ -50,6 +60,7 @@ namespace Projector.Data.Projection
 
         protected override Expression VisitNew(NewExpression node)
         {
+            // this is for anonymous types only
             if (node.Members != null)
             {
                 for (int i = 0; i < node.Members.Count; i++)
@@ -61,10 +72,10 @@ namespace Projector.Data.Projection
 
                     GenerateField(projectedFieldName, typeOfvalue, valueExpression);
                 }
+
+                _skip = true;
             }
-
-            _skip = true;
-
+            
             return base.VisitNew(node);
         }
 
