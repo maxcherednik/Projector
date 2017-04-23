@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Projector.Data.Join
 {
@@ -9,8 +10,7 @@ namespace Projector.Data.Join
         private ISchema _leftSchema;
         private ISchema _rightSchema;
 
-        private int _leftId;
-        private int _rightId;
+        private IDictionary<int, Tuple<int, int>> _rowIdMap;
 
         public JoinProjectedField(string name, Func<ISchema, int, ISchema, int, TData> fieldAccessor)
         {
@@ -28,19 +28,15 @@ namespace Projector.Data.Join
             _rightSchema = schema;
         }
 
-        public void SetLeftCurrentRow(int id)
+        public void SetRowIdMap(IDictionary<int, Tuple<int, int>> rowIdMap)
         {
-            _leftId = id;
-        }
-
-        public void SetRightCurrentRow(int id)
-        {
-            _rightId = id;
+            _rowIdMap = rowIdMap;
         }
 
         public TData GetValue(int rowId)
         {
-            return _fieldAccessor(_leftSchema, _leftId, _rightSchema, _rightId);
+            var oldRowIds = _rowIdMap[rowId];
+            return _fieldAccessor(_leftSchema, oldRowIds.Item1, _rightSchema, oldRowIds.Item2);
         }
 
         public Type DataType => typeof(TData);

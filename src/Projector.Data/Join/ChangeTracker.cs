@@ -45,47 +45,27 @@ namespace Projector.Data.Join
 
         private void FireOnAdd(IReadOnlyCollection<int> ids)
         {
-            var handler = OnAdded;
-            if (handler != null)
-            {
-                handler(ids);
-            }
+            OnAdded?.Invoke(ids);
         }
 
         private void FireOnDelete(IReadOnlyCollection<int> ids)
         {
-            var handler = OnDeleted;
-            if (handler != null)
-            {
-                handler(ids);
-            }
+            OnDeleted?.Invoke(ids);
         }
 
         private void FireOnUpdate(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> fields)
         {
-            var handler = OnUpdated;
-            if (handler != null)
-            {
-                handler(ids, fields);
-            }
+            OnUpdated?.Invoke(ids, fields);
         }
 
         private void FireOnSchema(ISchema schema)
         {
-            var handler = OnSchemaArrived;
-            if (handler != null)
-            {
-                handler(schema);
-            }
+            OnSchemaArrived?.Invoke(schema);
         }
 
         private void FireOnSyncPoint()
         {
-            var handler = OnSyncPointArrived;
-            if (handler != null)
-            {
-                handler();
-            }
+            OnSyncPointArrived?.Invoke();
         }
     }
 }
