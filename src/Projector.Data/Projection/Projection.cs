@@ -28,7 +28,7 @@ namespace Projector.Data.Projection
 
         public void OnSyncPoint()
         {
-            base.FireChanges();
+            FireChanges();
         }
 
         public void OnAdd(IReadOnlyCollection<int> ids)

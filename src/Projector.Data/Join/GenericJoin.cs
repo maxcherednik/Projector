@@ -10,8 +10,8 @@ namespace Projector.Data.Join
                     Expression<Func<TLeft, TKey>> leftKeySelector,
                     Expression<Func<TRight, TKey>> rightKeySelector,
                     Expression<Func<TLeft, TRight, TResult>> resultColumnsSelector,
-                    JoinType joinType):
-            base(leftSource, rightSource, joinType,null)
+                    JoinType joinType) :
+            base(leftSource, rightSource, joinType, new ResultSelectorVisitor().GenerateProjection(resultColumnsSelector).Item2)
         {
 
         }

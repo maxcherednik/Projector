@@ -5,12 +5,10 @@ namespace Projector.Data.Join
 {
     class JoinProjectionSchema : ISchema
     {
-        private readonly ISchema _sourceSchema;
         private readonly IDictionary<string, IField> _data;
 
-        public JoinProjectionSchema(ISchema schema, IDictionary<string, IField> projectionFields)
+        public JoinProjectionSchema(IDictionary<string, IField> projectionFields)
         {
-            _sourceSchema = schema;
             _data = projectionFields;
             Columns = new List<IField>(_data.Values);
         }
@@ -22,8 +20,8 @@ namespace Projector.Data.Join
             if (_data.TryGetValue(name, out IField projectionField))
             {
                 var projectedFieldImpl = (JoinProjectedField<T>)projectionField;
-                projectedFieldImpl.SetLeftSchema(_sourceSchema);
-                projectedFieldImpl.SetRightSchema(_sourceSchema);
+                projectedFieldImpl.SetLeftSchema(LeftSchema);
+                projectedFieldImpl.SetRightSchema(RightSchema);
                 return projectedFieldImpl;
             }
 
@@ -39,5 +37,9 @@ namespace Projector.Data.Join
 
             throw new InvalidOperationException("Can't find column name: '" + name + "'");
         }
+
+        public ISchema LeftSchema { get; set; }
+
+        public ISchema RightSchema { get; set; }
     }
 }

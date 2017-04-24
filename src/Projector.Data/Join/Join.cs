@@ -24,6 +24,8 @@ namespace Projector.Data.Join
 
         private readonly HashSet<int> _freeRows;
 
+        private readonly IDictionary<string, IField> _projectionFields;
+
         public Join(IDataProvider leftSource,
                     IDataProvider rightSource,
                     JoinType joinType,
@@ -61,6 +63,13 @@ namespace Projector.Data.Join
         void _leftChangeTracker_OnSchemaArrived(ISchema schema)
         {
             _leftSchema = schema;
+
+            var projectedSchema = new JoinProjectionSchema(_projectionFields)
+            {
+                LeftSchema = schema
+            };
+
+            SetSchema(projectedSchema);
         }
 
         void _leftChangeTracker_OnUpdated(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> updatedFields)
@@ -147,6 +156,7 @@ namespace Projector.Data.Join
         void _rightChangeTracker_OnSchemaArrived(ISchema schema)
         {
             _rightSchema = schema;
+            ((JoinProjectionSchema)Schema).RightSchema = schema;
         }
 
         void _rightChangeTracker_OnUpdated(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> updatedFields)

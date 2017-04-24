@@ -5,12 +5,11 @@ namespace Projector.Data.Projection
     public class ProjectedField<TData> : IField<TData>
     {
         private ISchema _schema;
-        private readonly string _name;
         private readonly Func<ISchema, int, TData> _fieldAccessor;
 
         public ProjectedField(string name, Func<ISchema, int, TData> fieldAccessor)
         {
-            _name = name;
+            Name = name;
             _fieldAccessor = fieldAccessor;
         }
 
@@ -21,17 +20,11 @@ namespace Projector.Data.Projection
 
         public TData GetValue(int rowId)
         {
-            return _fieldAccessor(_schema, rowId); 
+            return _fieldAccessor(_schema, rowId);
         }
 
-        public Type DataType
-        {
-            get { return typeof(TData); }
-        }
+        public Type DataType => typeof(TData);
 
-        public string Name
-        {
-            get { return _name; }
-        }
+        public string Name { get; }
     }
 }

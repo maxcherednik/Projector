@@ -6,8 +6,6 @@ namespace Projector.Data
 {
     public class DataProviderBase : IDataProvider
     {
-        private ISchema _schema;
-
         protected HashSet<int> UsedIds;
 
         protected HashSet<int> CurrentAddedIds;
@@ -27,7 +25,7 @@ namespace Projector.Data
 
         protected void SetSchema(ISchema schema)
         {
-            _schema = schema;
+            Schema = schema;
         }
 
         protected void AddId(int id)
@@ -95,11 +93,11 @@ namespace Projector.Data
 
         public IDisconnectable AddConsumer(IDataConsumer consumer)
         {
-            consumer.OnSchema(_schema);
+            consumer.OnSchema(Schema);
 
             if (UsedIds.Count > 0)
             {
-                consumer.OnAdd(UsedIds.ToList());
+                consumer.OnAdd((IReadOnlyCollection<int>)UsedIds);
             }
 
             consumer.OnSyncPoint();
@@ -122,7 +120,7 @@ namespace Projector.Data
             OnSyncPoint -= consumer.OnSyncPoint;
         }
 
-        public ISchema Schema { get { return _schema; } }
+        public ISchema Schema { get; private set; }
 
         private event Action<IReadOnlyCollection<int>> OnAdd;
         private event Action<IReadOnlyCollection<int>, IReadOnlyCollection<IField>> OnUpdate;
@@ -132,47 +130,27 @@ namespace Projector.Data
 
         private void FireOnAdd(IReadOnlyCollection<int> ids)
         {
-            var handler = OnAdd;
-            if (handler != null)
-            {
-                handler(ids);
-            }
+            OnAdd?.Invoke(ids);
         }
 
         private void FireOnDelete(IReadOnlyCollection<int> ids)
         {
-            var handler = OnDelete;
-            if (handler != null)
-            {
-                handler(ids);
-            }
+            OnDelete?.Invoke(ids);
         }
 
         private void FireOnUpdate(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> fields)
         {
-            var handler = OnUpdate;
-            if (handler != null)
-            {
-                handler(ids, fields);
-            }
+            OnUpdate?.Invoke(ids, fields);
         }
 
         private void FireOnSchema(ISchema schema)
         {
-            var handler = OnSchema;
-            if (handler != null)
-            {
-                handler(schema);
-            }
+            OnSchema?.Invoke(schema);
         }
 
         private void FireOnSyncPoint()
         {
-            var handler = OnSyncPoint;
-            if (handler != null)
-            {
-                handler();
-            }
+            OnSyncPoint?.Invoke();
         }
     }
 }
