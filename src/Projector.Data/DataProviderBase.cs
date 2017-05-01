@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
 
 namespace Projector.Data
@@ -36,9 +35,13 @@ namespace Projector.Data
             }
         }
 
-        protected void UpdateId(int id, IField field)
+        protected void UpdateId(int id)
         {
             CurrentUpdatedIds.Add(id);
+        }
+
+        protected void AddUpdatedField(IField field)
+        {
             _updatedFields.Add(field);
         }
 

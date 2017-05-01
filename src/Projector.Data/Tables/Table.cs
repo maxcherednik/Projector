@@ -21,7 +21,8 @@ namespace Projector.Data.Tables
             writableField.SetValue(rowIndex, value);
             if (!CurrentAddedIds.Contains(rowIndex))
             {
-                UpdateId(rowIndex, writableField);
+                UpdateId(rowIndex);
+                AddUpdatedField(writableField);
             }
         }
 

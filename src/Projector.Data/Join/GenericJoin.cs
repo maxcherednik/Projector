@@ -11,7 +11,11 @@ namespace Projector.Data.Join
                     Expression<Func<TRight, TKey>> rightKeySelector,
                     Expression<Func<TLeft, TRight, TResult>> resultColumnsSelector,
                     JoinType joinType) :
-            base(leftSource, rightSource, joinType, new ResultSelectorVisitor().GenerateProjection(resultColumnsSelector).Item2)
+            base(leftSource,
+                rightSource,
+                joinType,
+                new KeySelectorVisitor<TLeft, TRight, TKey>(leftKeySelector, rightKeySelector).Generate(),
+                new ResultSelectorVisitor().GenerateProjection(resultColumnsSelector))
         {
 
         }

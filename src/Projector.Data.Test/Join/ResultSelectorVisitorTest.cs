@@ -65,8 +65,8 @@ namespace Projector.Data.Test.Join
             };
 
             var projectedFieldsMeta = new ResultSelectorVisitor().GenerateProjection(filterExpression);
-            var oldFieldNamesToNewFieldNamesMapping = projectedFieldsMeta.Item1;
-            var projectedFields = projectedFieldsMeta.Item2;
+            var oldFieldNamesToNewFieldNamesMapping = projectedFieldsMeta.LeftSourceOldNamesToNewNamesMapping;
+            var projectedFields = projectedFieldsMeta.ProjectedFields;
 
             //check mappings
 

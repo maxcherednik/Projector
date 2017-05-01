@@ -58,6 +58,8 @@ namespace Projector.Data.Filter
 
         public void OnUpdate(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> updatedFields)
         {
+            var wasUpdated = false;
+
             // if fields, which are used in the filter, updated, we need to to recheck filter criteria
             if (FieldsInUse(updatedFields))
             {
@@ -76,10 +78,8 @@ namespace Projector.Data.Filter
                     }
                     else if (usedBefore && usedAfter)
                     {
-                        foreach (var updatedField in updatedFields)
-                        {
-                            UpdateId(id, updatedField);
-                        }
+                        UpdateId(id);
+                        wasUpdated = true;
                     }
                 }
             }
@@ -91,11 +91,17 @@ namespace Projector.Data.Filter
                 {
                     if (UsedIds.Contains(id))
                     {
-                        foreach (var updatedField in updatedFields)
-                        {
-                            UpdateId(id, updatedField);
-                        }
+                        UpdateId(id);
+                        wasUpdated = true;
                     }
+                }
+            }
+
+            if (wasUpdated)
+            {
+                foreach (var updatedField in updatedFields)
+                {
+                    AddUpdatedField(updatedField);
                 }
             }
         }

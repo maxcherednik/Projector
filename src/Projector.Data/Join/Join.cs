@@ -15,26 +15,42 @@ namespace Projector.Data.Join
         private readonly HashSet<int> _allLeftRowIds;
         private readonly HashSet<int> _allRightRowIds;
 
-        private Func<ISchema, ISchema, int, int, bool> _rowMatcher;
-
-        private readonly Dictionary<int, int> _leftRowIdToJoinedRowIdMapping;
-        private readonly Dictionary<int, int> _rightRowIdToJoinedRowIdMapping;
+        private readonly Dictionary<int, List<int>> _leftRowIdToJoinedRowIdMapping;
+        private readonly Dictionary<int, List<int>> _rightRowIdToJoinedRowIdMapping;
 
         private int _latestJoinedRowId = -1;
 
         private readonly HashSet<int> _freeRows;
 
-        private readonly IDictionary<string, IField> _projectionFields;
+        private HashSet<IField> _currentUpdatedFields;
+
+        private Dictionary<int, Tuple<int, int>> _joinedRowIdsToLeftRightRowIdsMapping;
+
+        private JoinProjectedFieldsMeta _projectionFieldsMeta;
+
+        private KeyFieldsMeta _keyFieldsMeta;
 
         public Join(IDataProvider leftSource,
                     IDataProvider rightSource,
                     JoinType joinType,
-                    IDictionary<string, IField> projectionFields)
+                    KeyFieldsMeta keyFieldsMeta,
+                    JoinProjectedFieldsMeta projectionFieldsMeta)
         {
             _freeRows = new HashSet<int>();
 
+            _joinedRowIdsToLeftRightRowIdsMapping = new Dictionary<int, Tuple<int, int>>();
+
+            _currentUpdatedFields = new HashSet<IField>();
             _allLeftRowIds = new HashSet<int>();
-            _leftRowIdToJoinedRowIdMapping = new Dictionary<int, int>();
+            _allRightRowIds = new HashSet<int>();
+
+            _leftRowIdToJoinedRowIdMapping = new Dictionary<int, List<int>>();
+            _rightRowIdToJoinedRowIdMapping = new Dictionary<int, List<int>>();
+
+            _keyFieldsMeta = keyFieldsMeta;
+
+            _projectionFieldsMeta = projectionFieldsMeta;
+
             _leftChangeTracker = new ChangeTracker();
             _leftChangeTracker.OnAdded += _leftChangeTracker_OnAdded;
             _leftChangeTracker.OnDeleted += _leftChangeTracker_OnDeleted;
@@ -43,9 +59,6 @@ namespace Projector.Data.Join
             _leftChangeTracker.OnSyncPointArrived += _leftChangeTracker_OnSyncPointArrived;
             _leftChangeTracker.SetSource(leftSource);
 
-
-            _allRightRowIds = new HashSet<int>();
-            _rightRowIdToJoinedRowIdMapping = new Dictionary<int, int>();
             _rightChangeTracker = new ChangeTracker();
             _rightChangeTracker.OnAdded += _rightChangeTracker_OnAdded;
             _rightChangeTracker.OnDeleted += _rightChangeTracker_OnDeleted;
@@ -57,14 +70,17 @@ namespace Projector.Data.Join
 
         void _leftChangeTracker_OnSyncPointArrived()
         {
-            FireChanges();
+            if (_rightSchema != null)
+            {
+                FireChanges();
+            }
         }
 
         void _leftChangeTracker_OnSchemaArrived(ISchema schema)
         {
             _leftSchema = schema;
 
-            var projectedSchema = new JoinProjectionSchema(_projectionFields)
+            var projectedSchema = new JoinProjectionSchema(_projectionFieldsMeta.ProjectedFields)
             {
                 LeftSchema = schema
             };
@@ -74,7 +90,76 @@ namespace Projector.Data.Join
 
         void _leftChangeTracker_OnUpdated(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> updatedFields)
         {
-            throw new System.NotImplementedException();
+            ProcessOnUpdated(ids, updatedFields, true);
+        }
+
+        private void ProcessOnUpdated(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> updatedFields, bool left)
+        {
+            // Lets check if any fields which are used in the key are updated.
+            // This will cause either add or delete or delete/add
+            var keyChanged = false;
+            var keyFieldNames = left ? _keyFieldsMeta.LeftKeyFieldNames : _keyFieldsMeta.RightKeyFieldNames;
+
+            foreach (var updatedField in updatedFields)
+            {
+                if (keyFieldNames.Contains(updatedField.Name))
+                {
+                    keyChanged = true;
+                    break;
+                }
+            }
+
+            if (keyChanged)
+            {
+                ProcessOnDelete(ids, left);
+                ProcessOnAdd(ids, left);
+            }
+            else // non-key updated
+            {
+                _currentUpdatedFields.Clear();
+
+                var oldFieldNamesToNewFieldNamesMapping = left
+                                                            ? _projectionFieldsMeta.LeftSourceOldNamesToNewNamesMapping
+                                                            : _projectionFieldsMeta.RightSourceOldNamesToNewNamesMapping;
+
+                foreach (var updatedField in updatedFields)
+                {
+                    if (oldFieldNamesToNewFieldNamesMapping.TryGetValue(updatedField.Name, out ISet<string> newFieldNames))
+                    {
+                        foreach (var newFieldName in newFieldNames)
+                        {
+                            _currentUpdatedFields.Add(Schema.GetFieldMeta(newFieldName));
+                        }
+                    }
+                }
+
+                if (_currentUpdatedFields.Count > 0)
+                {
+                    var somethingWasUpdated = false;
+
+                    var rowIdToJoinedRowIdMapping = left ? _leftRowIdToJoinedRowIdMapping : _rightRowIdToJoinedRowIdMapping;
+
+                    foreach (var id in ids)
+                    {
+                        if (rowIdToJoinedRowIdMapping.TryGetValue(id, out List<int> joinedRowIds))
+                        {
+                            foreach (var joinedRowId in joinedRowIds)
+                            {
+                                UpdateId(joinedRowId);
+                                somethingWasUpdated = true;
+                            }
+                        }
+                    }
+
+                    if (somethingWasUpdated)
+                    {
+                        foreach (var updatedField in _currentUpdatedFields)
+                        {
+                            AddUpdatedField(updatedField);
+                        }
+                    }
+                }
+            }
         }
 
         void _leftChangeTracker_OnDeleted(IReadOnlyCollection<int> ids)
@@ -84,19 +169,26 @@ namespace Projector.Data.Join
 
         void _leftChangeTracker_OnAdded(IReadOnlyCollection<int> ids)
         {
-            ProcessOnAdd(ids, _allLeftRowIds, (IReadOnlyCollection<int>)_allRightRowIds, _leftSchema, _rightSchema);
+            ProcessOnAdd(ids, true);
         }
 
-        private void ProcessOnAdd(IReadOnlyCollection<int> ids, ISet<int> allLeftIds, IReadOnlyCollection<int> outerIds, ISchema leftSchema, ISchema rightSchema)
+        private void ProcessOnAdd(IReadOnlyCollection<int> ids, bool left)
         {
+            var allLeftIds = left ? _allLeftRowIds : _allRightRowIds;
+
+            var outerIds = left ? _allRightRowIds : _allLeftRowIds;
+
             foreach (var id in ids)
             {
                 allLeftIds.Add(id);
                 foreach (var outerRowId in outerIds)
                 {
-                    if (_rowMatcher(leftSchema, rightSchema, id, outerRowId))
+                    var leftRowId = left ? id : outerRowId;
+                    var rightRowId = left ? outerRowId : id;
+
+                    if (_keyFieldsMeta.RowMatcher(_leftSchema, leftRowId, _rightSchema, rightRowId))
                     {
-                        var joinedRowId = CreateMapping(id, outerRowId);
+                        var joinedRowId = CreateMapping(leftRowId, rightRowId);
                         AddId(joinedRowId);
                     }
                 }
@@ -105,47 +197,73 @@ namespace Projector.Data.Join
 
         private void ProcessOnDelete(IReadOnlyCollection<int> ids, bool left)
         {
+            var leftRowIdToJoinedRowIdMapping = left ? _leftRowIdToJoinedRowIdMapping : _rightRowIdToJoinedRowIdMapping;
+            var rightRowIdToJoinedRowIdMapping = left ? _rightRowIdToJoinedRowIdMapping : _leftRowIdToJoinedRowIdMapping;
+            var allLeftIds = left ? _allLeftRowIds : _allRightRowIds;
+
             foreach (var id in ids)
             {
-                var joinedRowId = left
-                    ? RemoveMappingBySourceRowId(_leftRowIdToJoinedRowIdMapping, id)
-                    : RemoveMappingBySourceRowId(_rightRowIdToJoinedRowIdMapping, id);
+                allLeftIds.Remove(id);
 
-                if (joinedRowId != -1)
+                if (leftRowIdToJoinedRowIdMapping.TryGetValue(id, out List<int> joinedRowIds))
                 {
-                    RemoveId(joinedRowId);
+                    foreach (var joinedRowId in joinedRowIds)
+                    {
+                        _freeRows.Add(joinedRowId);
+
+                        var leftRightMap = _joinedRowIdsToLeftRightRowIdsMapping[joinedRowId];
+                        _joinedRowIdsToLeftRightRowIdsMapping.Remove(joinedRowId);
+
+                        var counterRowId = left ? leftRightMap.Item2 : leftRightMap.Item1;
+
+                        var counterJoinedRowIds = rightRowIdToJoinedRowIdMapping[counterRowId];
+                        counterJoinedRowIds.Remove(joinedRowId);
+
+                        RemoveId(joinedRowId);
+                    }
+                    joinedRowIds.Clear();
                 }
             }
         }
 
         private int CreateMapping(int leftId, int rightId)
         {
+            int newJoinedRowId;
             if (_freeRows.Count > 0)
             {
                 var oldRowIndex = _freeRows.First();
                 _freeRows.Remove(oldRowIndex);
-                return oldRowIndex;
+                newJoinedRowId = oldRowIndex;
             }
             else
             {
                 _latestJoinedRowId++;
 
-                _leftRowIdToJoinedRowIdMapping.Add(leftId, _latestJoinedRowId);
-                _rightRowIdToJoinedRowIdMapping.Add(rightId, _latestJoinedRowId);
-                return _latestJoinedRowId;
+                newJoinedRowId = _latestJoinedRowId;
             }
-        }
 
-        private int RemoveMappingBySourceRowId(Dictionary<int, int> sourceRowIdToJoinedRowIdMapping, int sourceRowId)
-        {
-            if (sourceRowIdToJoinedRowIdMapping.TryGetValue(sourceRowId, out int joinedRowId))
+            // add mapping 
+
+            _joinedRowIdsToLeftRightRowIdsMapping.Add(newJoinedRowId, Tuple.Create(leftId, rightId));
+
+            if (!_leftRowIdToJoinedRowIdMapping.TryGetValue(leftId, out List<int> joinedRowIds))
             {
-                _freeRows.Add(joinedRowId);
-                _leftRowIdToJoinedRowIdMapping.Remove(sourceRowId);
-                return joinedRowId;
+                joinedRowIds = new List<int>();
+                _leftRowIdToJoinedRowIdMapping.Add(leftId, joinedRowIds);
             }
 
-            return -1;
+            joinedRowIds.Add(newJoinedRowId);
+
+
+            if (!_rightRowIdToJoinedRowIdMapping.TryGetValue(rightId, out joinedRowIds))
+            {
+                joinedRowIds = new List<int>();
+                _rightRowIdToJoinedRowIdMapping.Add(rightId, joinedRowIds);
+            }
+
+            joinedRowIds.Add(newJoinedRowId);
+
+            return newJoinedRowId;
         }
 
         void _rightChangeTracker_OnSyncPointArrived()
@@ -161,7 +279,7 @@ namespace Projector.Data.Join
 
         void _rightChangeTracker_OnUpdated(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> updatedFields)
         {
-            throw new System.NotImplementedException();
+            ProcessOnUpdated(ids, updatedFields, false);
         }
 
         void _rightChangeTracker_OnDeleted(IReadOnlyCollection<int> ids)
@@ -171,7 +289,7 @@ namespace Projector.Data.Join
 
         void _rightChangeTracker_OnAdded(IReadOnlyCollection<int> ids)
         {
-            ProcessOnAdd(ids, _allRightRowIds, (IReadOnlyCollection<int>)_allLeftRowIds, _rightSchema, _leftSchema);
+            ProcessOnAdd(ids, false);
         }
     }
 }

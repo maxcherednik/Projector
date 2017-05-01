@@ -57,10 +57,12 @@ namespace Projector.Data.Projection
             {
                 foreach (var id in ids)
                 {
-                    foreach (var updatedField in _currentUpdatedFields)
-                    {
-                        UpdateId(id, updatedField);
-                    }
+                    UpdateId(id);
+                }
+
+                foreach (var updatedField in _currentUpdatedFields)
+                {
+                    AddUpdatedField(updatedField);
                 }
             }
         }

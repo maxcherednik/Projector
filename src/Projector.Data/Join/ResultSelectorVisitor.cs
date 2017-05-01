@@ -35,13 +35,15 @@ namespace Projector.Data.Join
             _oldFieldNamesToNewFieldNamesMapping = new Dictionary<string, ISet<string>>();
         }
 
-        public Tuple<IDictionary<string, ISet<string>>, IDictionary<string, IField>> GenerateProjection<TLeft, TRight, TResult>(Expression<Func<TLeft, TRight, TResult>> transformerExpression)
+        public JoinProjectedFieldsMeta GenerateProjection<TLeft, TRight, TResult>(Expression<Func<TLeft, TRight, TResult>> transformerExpression)
         {
             _projectedFields.Clear();
 
             Visit(transformerExpression);
 
-            return Tuple.Create(_oldFieldNamesToNewFieldNamesMapping, _projectedFields);
+            var joinProjectedFieldsMeta = new JoinProjectedFieldsMeta(_oldFieldNamesToNewFieldNamesMapping, _oldFieldNamesToNewFieldNamesMapping, _projectedFields);
+
+            return joinProjectedFieldsMeta;
         }
 
         protected override Expression VisitLambda<T>(Expression<T> node)
