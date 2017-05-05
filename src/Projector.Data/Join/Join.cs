@@ -80,7 +80,7 @@ namespace Projector.Data.Join
         {
             _leftSchema = schema;
 
-            var projectedSchema = new JoinProjectionSchema(_projectionFieldsMeta.ProjectedFields)
+            var projectedSchema = new JoinProjectionSchema(_projectionFieldsMeta.ProjectedFields, _joinedRowIdsToLeftRightRowIdsMapping)
             {
                 LeftSchema = schema
             };

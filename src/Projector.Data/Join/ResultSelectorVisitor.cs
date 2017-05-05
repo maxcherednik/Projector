@@ -8,17 +8,13 @@ namespace Projector.Data.Join
     public class ResultSelectorVisitor : ExpressionVisitor
     {
         private string _currentProjectedName;
-
-        private IDictionary<string, IField> _projectedFields;
-        private IDictionary<string, ISet<string>> _oldFieldNamesToNewFieldNamesMapping;
         private ParameterExpression _schemaParameterLeft;
         private ParameterExpression _idParameterLeft;
         private ParameterExpression _schemaParameterRight;
         private ParameterExpression _idParameterRight;
         private MethodInfo _getFieldMethodInfo;
-        private bool _skip;
 
-        private Dictionary<ParameterExpression, Tuple<ParameterExpression, ParameterExpression>> _parametersToScheamMap;
+        private Dictionary<ParameterExpression, Tuple<ParameterExpression, ParameterExpression, Dictionary<string, ISet<string>>>> _parametersToScheamMap;
 
         public ResultSelectorVisitor()
         {
@@ -28,33 +24,26 @@ namespace Projector.Data.Join
             _schemaParameterRight = Expression.Parameter(typeof(ISchema), "schema");
             _idParameterRight = Expression.Parameter(typeof(int), "id");
 
-            _parametersToScheamMap = new Dictionary<ParameterExpression, Tuple<ParameterExpression, ParameterExpression>>(2);
+            _parametersToScheamMap = new Dictionary<ParameterExpression, Tuple<ParameterExpression, ParameterExpression, Dictionary<string, ISet<string>>>>(2);
 
             _getFieldMethodInfo = typeof(ISchema).GetTypeInfo().GetDeclaredMethod("GetField");
-            _projectedFields = new Dictionary<string, IField>();
-            _oldFieldNamesToNewFieldNamesMapping = new Dictionary<string, ISet<string>>();
+
         }
 
         public JoinProjectedFieldsMeta GenerateProjection<TLeft, TRight, TResult>(Expression<Func<TLeft, TRight, TResult>> transformerExpression)
         {
-            _projectedFields.Clear();
+            var oldFieldNamesToNewFieldNamesMappingLeft = new Dictionary<string, ISet<string>>();
+            var oldFieldNamesToNewFieldNamesMappingRight = new Dictionary<string, ISet<string>>();
 
-            Visit(transformerExpression);
+            _parametersToScheamMap.Add(transformerExpression.Parameters[0], Tuple.Create(_schemaParameterLeft, _idParameterLeft, oldFieldNamesToNewFieldNamesMappingLeft));
+            _parametersToScheamMap.Add(transformerExpression.Parameters[1], Tuple.Create(_schemaParameterRight, _idParameterRight, oldFieldNamesToNewFieldNamesMappingRight));
 
-            var joinProjectedFieldsMeta = new JoinProjectedFieldsMeta(_oldFieldNamesToNewFieldNamesMapping, _oldFieldNamesToNewFieldNamesMapping, _projectedFields);
+            var projectedFields = GenerateFromAnonymous((NewExpression)transformerExpression.Body);
 
-            return joinProjectedFieldsMeta;
+            return new JoinProjectedFieldsMeta(oldFieldNamesToNewFieldNamesMappingLeft, oldFieldNamesToNewFieldNamesMappingRight, projectedFields);
         }
 
-        protected override Expression VisitLambda<T>(Expression<T> node)
-        {
-            _parametersToScheamMap.Add(node.Parameters[0], Tuple.Create(_schemaParameterLeft, _idParameterLeft));
-            _parametersToScheamMap.Add(node.Parameters[1], Tuple.Create(_schemaParameterRight, _idParameterRight));
-
-            return base.VisitLambda(node);
-        }
-
-        private void GenerateField(string projectedFieldName, Type typeOfValue, Expression expression)
+        private IField GenerateField(string projectedFieldName, Type typeOfValue, Expression expression)
         {
             _currentProjectedName = projectedFieldName;
             var projectedFieldType = typeof(JoinProjectedField<>).MakeGenericType(typeOfValue);
@@ -65,7 +54,7 @@ namespace Projector.Data.Join
 
             var projectedField = Activator.CreateInstance(projectedFieldType, projectedFieldName, lambda.Compile());
 
-            _projectedFields.Add(projectedFieldName, (IField)projectedField);
+            return (IField)projectedField;
         }
 
         protected override MemberAssignment VisitMemberAssignment(MemberAssignment node)
@@ -78,44 +67,37 @@ namespace Projector.Data.Join
             return node;
         }
 
-        protected override Expression VisitNew(NewExpression node)
+        protected IDictionary<string, IField> GenerateFromAnonymous(NewExpression node)
         {
             // this is for anonymous types only
-            if (node.Members != null)
+            var fieldDict = new Dictionary<string, IField>(node.Members.Count);
+
+            for (int i = 0; i < node.Members.Count; i++)
             {
-                for (int i = 0; i < node.Members.Count; i++)
-                {
-                    var member = node.Members[i];
-                    var valueExpression = node.Arguments[i];
-                    var projectedFieldName = member.Name;
-                    var typeOfvalue = valueExpression.Type;
+                var member = node.Members[i];
+                var valueExpression = node.Arguments[i];
+                var projectedFieldName = member.Name;
+                var typeOfvalue = valueExpression.Type;
 
-                    GenerateField(projectedFieldName, typeOfvalue, valueExpression);
-                }
-
-                _skip = true;
+                fieldDict.Add(projectedFieldName, GenerateField(projectedFieldName, typeOfvalue, valueExpression));
             }
 
-            return base.VisitNew(node);
+            return fieldDict;
         }
 
         protected override Expression VisitMember(MemberExpression node)
         {
-            if (_skip)
-            {
-                return base.VisitMember(node);
-            }
-
             var schemaParameter = _parametersToScheamMap[(ParameterExpression)node.Expression].Item1;
             var idParameter = _parametersToScheamMap[(ParameterExpression)node.Expression].Item2;
-
+            var oldFieldNamesToNewFieldNamesMapping = _parametersToScheamMap[(ParameterExpression)node.Expression].Item3;
 
             var oldFieldName = node.Member.Name;
-            if (!_oldFieldNamesToNewFieldNamesMapping.TryGetValue(oldFieldName, out ISet<string> newFieldNames))
+            if (!oldFieldNamesToNewFieldNamesMapping.TryGetValue(oldFieldName, out ISet<string> newFieldNames))
             {
                 newFieldNames = new HashSet<string>();
-                _oldFieldNamesToNewFieldNamesMapping.Add(oldFieldName, newFieldNames);
+                oldFieldNamesToNewFieldNamesMapping.Add(oldFieldName, newFieldNames);
             }
+
             newFieldNames.Add(_currentProjectedName);
 
             var genericMethodInfo = _getFieldMethodInfo.MakeGenericMethod(node.Type);

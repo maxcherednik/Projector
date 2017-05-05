@@ -65,35 +65,38 @@ namespace Projector.Data.Test.Join
             };
 
             var projectedFieldsMeta = new ResultSelectorVisitor().GenerateProjection(filterExpression);
-            var oldFieldNamesToNewFieldNamesMapping = projectedFieldsMeta.LeftSourceOldNamesToNewNamesMapping;
+            var oldFieldNamesToNewFieldNamesMappingLeft = projectedFieldsMeta.LeftSourceOldNamesToNewNamesMapping;
+            var oldFieldNamesToNewFieldNamesMappingRight = projectedFieldsMeta.RightSourceOldNamesToNewNamesMapping;
             var projectedFields = projectedFieldsMeta.ProjectedFields;
 
-            //check mappings
+            //check left mappings
 
-            Assert.Equal(4, oldFieldNamesToNewFieldNamesMapping.Count);
+            Assert.Equal(2, oldFieldNamesToNewFieldNamesMappingLeft.Count);
 
-            Assert.True(oldFieldNamesToNewFieldNamesMapping.ContainsKey("Name"));
-            Assert.True(oldFieldNamesToNewFieldNamesMapping.ContainsKey("Age"));
-            Assert.True(oldFieldNamesToNewFieldNamesMapping.ContainsKey("Street"));
-            Assert.True(oldFieldNamesToNewFieldNamesMapping.ContainsKey("HouseNumber"));
+            Assert.True(oldFieldNamesToNewFieldNamesMappingLeft.ContainsKey("Name"));
+            Assert.True(oldFieldNamesToNewFieldNamesMappingLeft.ContainsKey("Age"));
 
-            var firstMapping = oldFieldNamesToNewFieldNamesMapping["Name"];
+            var firstMapping = oldFieldNamesToNewFieldNamesMappingLeft["Name"];
             Assert.Equal(3, firstMapping.Count);
             Assert.True(firstMapping.Contains("Name"));
             Assert.True(firstMapping.Contains("NameAge"));
             Assert.True(firstMapping.Contains("NameAddressHouse"));
 
 
-            var secondMapping = oldFieldNamesToNewFieldNamesMapping["Age"];
+            var secondMapping = oldFieldNamesToNewFieldNamesMappingLeft["Age"];
             Assert.Equal(1, secondMapping.Count);
             Assert.True(secondMapping.Contains("NameAge"));
 
-            var thirdMapping = oldFieldNamesToNewFieldNamesMapping["Street"];
+            //check right mappings
+
+            Assert.Equal(2, oldFieldNamesToNewFieldNamesMappingRight.Count);
+
+            var thirdMapping = oldFieldNamesToNewFieldNamesMappingRight["Street"];
             Assert.Equal(2, thirdMapping.Count);
             Assert.True(thirdMapping.Contains("Street"));
             Assert.True(thirdMapping.Contains("NameAddressHouse"));
 
-            var fouthMapping = oldFieldNamesToNewFieldNamesMapping["HouseNumber"];
+            var fouthMapping = oldFieldNamesToNewFieldNamesMappingRight["HouseNumber"];
             Assert.Equal(1, fouthMapping.Count);
             Assert.True(fouthMapping.Contains("NameAddressHouse"));
 
