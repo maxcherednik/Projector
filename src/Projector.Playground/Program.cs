@@ -91,7 +91,7 @@ namespace Projector.Playground
                 Console.WriteLine(stopwatch.Elapsed + " Press Enter key to continue...");
                 age++;
 
-                Thread.Sleep(1000);
+                Thread.Sleep(100);
             }
 
 

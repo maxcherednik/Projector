@@ -10,7 +10,7 @@ namespace Projector.Data.Join
         private ISchema _leftSchema;
         private ISchema _rightSchema;
 
-        private IDictionary<int, Tuple<int, int>> _rowIdMap;
+        private IDictionary<int, RowMap> _rowIdMap;
 
         public JoinProjectedField(string name, Func<ISchema, int, ISchema, int, TData> fieldAccessor)
         {
@@ -28,7 +28,7 @@ namespace Projector.Data.Join
             _rightSchema = schema;
         }
 
-        public void SetRowIdMap(IDictionary<int, Tuple<int, int>> rowIdMap)
+        public void SetRowIdMap(IDictionary<int, RowMap> rowIdMap)
         {
             _rowIdMap = rowIdMap;
         }
@@ -36,7 +36,7 @@ namespace Projector.Data.Join
         public TData GetValue(int rowId)
         {
             var oldRowIds = _rowIdMap[rowId];
-            return _fieldAccessor(_leftSchema, oldRowIds.Item1, _rightSchema, oldRowIds.Item2);
+            return _fieldAccessor(_leftSchema, oldRowIds.LeftRowId, _rightSchema, oldRowIds.RightRowId);
         }
 
         public Type DataType => typeof(TData);

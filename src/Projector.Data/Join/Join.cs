@@ -24,7 +24,7 @@ namespace Projector.Data.Join
 
         private HashSet<IField> _currentUpdatedFields;
 
-        private Dictionary<int, Tuple<int, int>> _joinedRowIdsToLeftRightRowIdsMapping;
+        private Dictionary<int, RowMap> _joinedRowIdsToLeftRightRowIdsMapping;
 
         private JoinProjectedFieldsMeta _projectionFieldsMeta;
 
@@ -38,7 +38,7 @@ namespace Projector.Data.Join
         {
             _freeRows = new HashSet<int>();
 
-            _joinedRowIdsToLeftRightRowIdsMapping = new Dictionary<int, Tuple<int, int>>();
+            _joinedRowIdsToLeftRightRowIdsMapping = new Dictionary<int, RowMap>();
 
             _currentUpdatedFields = new HashSet<IField>();
             _allLeftRowIds = leftSource.RowIds;
@@ -211,7 +211,7 @@ namespace Projector.Data.Join
                         var leftRightMap = _joinedRowIdsToLeftRightRowIdsMapping[joinedRowId];
                         _joinedRowIdsToLeftRightRowIdsMapping.Remove(joinedRowId);
 
-                        var counterRowId = left ? leftRightMap.Item2 : leftRightMap.Item1;
+                        var counterRowId = left ? leftRightMap.RightRowId : leftRightMap.LeftRowId;
 
                         var counterJoinedRowIds = rightRowIdToJoinedRowIdMapping[counterRowId];
                         counterJoinedRowIds.Remove(joinedRowId);
@@ -241,7 +241,7 @@ namespace Projector.Data.Join
 
             // add mapping 
 
-            _joinedRowIdsToLeftRightRowIdsMapping.Add(newJoinedRowId, Tuple.Create(leftId, rightId));
+            _joinedRowIdsToLeftRightRowIdsMapping.Add(newJoinedRowId, new RowMap(leftId, rightId));
 
             if (!_leftRowIdToJoinedRowIdMapping.TryGetValue(leftId, out List<int> joinedRowIds))
             {
