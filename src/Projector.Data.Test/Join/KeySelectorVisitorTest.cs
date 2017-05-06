@@ -56,14 +56,25 @@ namespace Projector.Data.Test.Join
 
             Expression<Func<PersonAddress, string>> rightKeySelectorExpression = personAddress => personAddress.Name;
 
-            var rowMatch = new KeySelectorVisitor<Person, PersonAddress, string>(leftKeySelectorExpression, rightKeySelectorExpression)
+            var rowMatchMeta = new KeySelectorVisitor<Person, PersonAddress, string>(leftKeySelectorExpression, rightKeySelectorExpression)
                                         .Generate();
 
             // check
 
-            Assert.True(rowMatch.RowMatcher(mockSchemaLeft, 125, mockSchemaRight, 13)); // Max == Max
+            Assert.True(rowMatchMeta.RowMatcher(mockSchemaLeft, 125, mockSchemaRight, 13)); // Max == Max
 
-            Assert.False(rowMatch.RowMatcher(mockSchemaLeft, 125, mockSchemaRight, 14)); // Max != Joe
+            Assert.False(rowMatchMeta.RowMatcher(mockSchemaLeft, 125, mockSchemaRight, 14)); // Max != Joe
+
+            // check left keys mappings
+
+            Assert.Equal(1, rowMatchMeta.LeftKeyFieldNames.Count);
+
+            Assert.True(rowMatchMeta.LeftKeyFieldNames.Contains("Name"));
+
+            // check right keys mappings 
+            Assert.Equal(1, rowMatchMeta.RightKeyFieldNames.Count);
+
+            Assert.True(rowMatchMeta.RightKeyFieldNames.Contains("Name"));
         }
 
         [Fact]
@@ -113,14 +124,21 @@ namespace Projector.Data.Test.Join
 
             Expression<Func<PersonAddress, string>> rightKeySelectorExpression = personAddress => "1";
 
-            var rowMatch = new KeySelectorVisitor<Person, PersonAddress, string>(leftKeySelectorExpression, rightKeySelectorExpression)
+            var rowMatchMeta = new KeySelectorVisitor<Person, PersonAddress, string>(leftKeySelectorExpression, rightKeySelectorExpression)
                                         .Generate();
 
             // check
 
-            Assert.True(rowMatch.RowMatcher(mockSchemaLeft, 125, mockSchemaRight, 13)); // rows are matching cause "1"=="1"
+            Assert.True(rowMatchMeta.RowMatcher(mockSchemaLeft, 125, mockSchemaRight, 13)); // rows are matching cause "1"=="1"
 
-            Assert.True(rowMatch.RowMatcher(mockSchemaLeft, 125, mockSchemaRight, 14)); // rows are matching cause "1"=="1"
+            Assert.True(rowMatchMeta.RowMatcher(mockSchemaLeft, 125, mockSchemaRight, 14)); // rows are matching cause "1"=="1"
+
+            // check left keys mappings
+
+            Assert.Equal(0, rowMatchMeta.LeftKeyFieldNames.Count);
+
+            // check right keys mappings 
+            Assert.Equal(0, rowMatchMeta.RightKeyFieldNames.Count);
         }
 
         [Fact]
@@ -171,14 +189,28 @@ namespace Projector.Data.Test.Join
 
             Expression<Func<PersonAddress, dynamic>> rightKeySelectorExpression = personAddress => new { personAddress.Name, personAddress.HouseNumber };
 
-            var rowMatch = new KeySelectorVisitor<Person, PersonAddress, dynamic>(leftKeySelectorExpression, rightKeySelectorExpression)
+            var rowMatchMeta = new KeySelectorVisitor<Person, PersonAddress, dynamic>(leftKeySelectorExpression, rightKeySelectorExpression)
                                         .Generate();
 
             // check
 
-            Assert.True(rowMatch.RowMatcher(mockSchemaLeft, 125, mockSchemaRight, 13)); // Name:Max == Name:Max &&  Age:25==HouseNumber:25
+            Assert.True(rowMatchMeta.RowMatcher(mockSchemaLeft, 125, mockSchemaRight, 13)); // Name:Max == Name:Max &&  Age:25==HouseNumber:25
 
-            Assert.False(rowMatch.RowMatcher(mockSchemaLeft, 125, mockSchemaRight, 14)); // Name:Max != Name:Joe &&  Age:25==HouseNumber:25
+            Assert.False(rowMatchMeta.RowMatcher(mockSchemaLeft, 125, mockSchemaRight, 14)); // Name:Max != Name:Joe &&  Age:25==HouseNumber:25
+
+            // check left keys mappings
+
+            Assert.Equal(2, rowMatchMeta.LeftKeyFieldNames.Count);
+
+            Assert.True(rowMatchMeta.LeftKeyFieldNames.Contains("Name"));
+            Assert.True(rowMatchMeta.LeftKeyFieldNames.Contains("Age"));
+
+
+            // check right keys mappings 
+            Assert.Equal(2, rowMatchMeta.RightKeyFieldNames.Count);
+
+            Assert.True(rowMatchMeta.RightKeyFieldNames.Contains("Name"));
+            Assert.True(rowMatchMeta.RightKeyFieldNames.Contains("HouseNumber"));
         }
 
         [Fact]
@@ -229,14 +261,27 @@ namespace Projector.Data.Test.Join
 
             Expression<Func<PersonAddress, dynamic>> rightKeySelectorExpression = personAddress => new { ComplexKeyFromTheSecondTable = personAddress.Name + personAddress.HouseNumber };
 
-            var rowMatch = new KeySelectorVisitor<Person, PersonAddress, dynamic>(leftKeySelectorExpression, rightKeySelectorExpression)
+            var rowMatchMeta = new KeySelectorVisitor<Person, PersonAddress, dynamic>(leftKeySelectorExpression, rightKeySelectorExpression)
                                         .Generate();
 
             // check
 
-            Assert.True(rowMatch.RowMatcher(mockSchemaLeft, 125, mockSchemaRight, 13)); // Name:Max == Name:Max &&  Age:25==HouseNumber:25
+            Assert.True(rowMatchMeta.RowMatcher(mockSchemaLeft, 125, mockSchemaRight, 13)); // Name:Max == Name:Max &&  Age:25==HouseNumber:25
 
-            Assert.False(rowMatch.RowMatcher(mockSchemaLeft, 125, mockSchemaRight, 14)); // Name:Max != Name:Joe &&  Age:25==HouseNumber:25
+            Assert.False(rowMatchMeta.RowMatcher(mockSchemaLeft, 125, mockSchemaRight, 14)); // Name:Max != Name:Joe &&  Age:25==HouseNumber:25
+
+            // check left keys mappings
+
+            Assert.Equal(2, rowMatchMeta.LeftKeyFieldNames.Count);
+
+            Assert.True(rowMatchMeta.LeftKeyFieldNames.Contains("Name"));
+            Assert.True(rowMatchMeta.LeftKeyFieldNames.Contains("Age"));
+
+            // check right keys mappings 
+            Assert.Equal(2, rowMatchMeta.RightKeyFieldNames.Count);
+
+            Assert.True(rowMatchMeta.RightKeyFieldNames.Contains("Name"));
+            Assert.True(rowMatchMeta.RightKeyFieldNames.Contains("HouseNumber"));
         }
 
         [Fact]
@@ -287,14 +332,27 @@ namespace Projector.Data.Test.Join
 
             Expression<Func<PersonAddress, ConcreteKey>> rightKeySelectorExpression = personAddress => new ConcreteKey { ComplexKey = personAddress.Name + personAddress.HouseNumber, SomeNumber = personAddress.HouseNumber };
 
-            var rowMatch = new KeySelectorVisitor<Person, PersonAddress, ConcreteKey>(leftKeySelectorExpression, rightKeySelectorExpression)
+            var rowMatchMeta = new KeySelectorVisitor<Person, PersonAddress, ConcreteKey>(leftKeySelectorExpression, rightKeySelectorExpression)
                                         .Generate();
 
             // check
 
-            Assert.True(rowMatch.RowMatcher(mockSchemaLeft, 125, mockSchemaRight, 13)); // Name:Max == Name:Max &&  Age:25==HouseNumber:25
+            Assert.True(rowMatchMeta.RowMatcher(mockSchemaLeft, 125, mockSchemaRight, 13)); // Name:Max == Name:Max &&  Age:25==HouseNumber:25
 
-            Assert.False(rowMatch.RowMatcher(mockSchemaLeft, 125, mockSchemaRight, 14)); // Name:Max != Name:Joe &&  Age:25==HouseNumber:25
+            Assert.False(rowMatchMeta.RowMatcher(mockSchemaLeft, 125, mockSchemaRight, 14)); // Name:Max != Name:Joe &&  Age:25==HouseNumber:25
+
+            // check left keys mappings
+
+            Assert.Equal(2, rowMatchMeta.LeftKeyFieldNames.Count);
+
+            Assert.True(rowMatchMeta.LeftKeyFieldNames.Contains("Name"));
+            Assert.True(rowMatchMeta.LeftKeyFieldNames.Contains("Age"));
+
+            // check right keys mappings 
+            Assert.Equal(2, rowMatchMeta.RightKeyFieldNames.Count);
+
+            Assert.True(rowMatchMeta.RightKeyFieldNames.Contains("Name"));
+            Assert.True(rowMatchMeta.RightKeyFieldNames.Contains("HouseNumber"));
         }
 
         private class Person

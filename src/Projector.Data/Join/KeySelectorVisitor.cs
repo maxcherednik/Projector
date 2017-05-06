@@ -13,6 +13,10 @@ namespace Projector.Data.Join
         private ParameterExpression _idParameter;
         private MethodInfo _getFieldMethodInfo;
 
+        private bool _left;
+        private HashSet<string> _leftKeyFieldNames;
+        private HashSet<string> _rightKeyFieldNames;
+
         public KeySelectorVisitor(Expression<Func<TLeft, TKey>> leftKeySelector, Expression<Func<TRight, TKey>> rightKeySelector)
         {
             _leftKeySelector = leftKeySelector;
@@ -22,34 +26,35 @@ namespace Projector.Data.Join
             _idParameter = Expression.Parameter(typeof(int), "id");
 
             _getFieldMethodInfo = typeof(ISchema).GetTypeInfo().GetDeclaredMethod("GetField");
+
+            _leftKeyFieldNames = new HashSet<string>();
+            _rightKeyFieldNames = new HashSet<string>();
         }
 
         public KeyFieldsMeta Generate()
         {
             var keyFieldMtchers = new List<IKeyFieldMatcher>();
 
+            _left = true;
+
             var projectedKeyFieldsLeft = GenerateFieldAccessor(_leftKeySelector);
 
-            var projectedKeyFieldsRight = GenerateFieldAccessor(_rightKeySelector);
+            _left = false;
 
-            var leftKeyFieldNames = new HashSet<string>();
-            var rightKeyFieldNames = new HashSet<string>();
+            var projectedKeyFieldsRight = GenerateFieldAccessor(_rightKeySelector);
 
             for (int i = 0; i < projectedKeyFieldsLeft.Count; i++)
             {
                 var projectedKeyFieldLeft = projectedKeyFieldsLeft[i];
                 var projectedKeyFieldRight = projectedKeyFieldsRight[i];
 
-                leftKeyFieldNames.Add(projectedKeyFieldLeft.Item1);
-                rightKeyFieldNames.Add(projectedKeyFieldRight.Item1);
+                var keyFieldType = typeof(KeyFieldMatcher<>).MakeGenericType(projectedKeyFieldLeft.ReturnType);
 
-                var keyFieldType = typeof(KeyFieldMatcher<>).MakeGenericType(projectedKeyFieldLeft.Item2.ReturnType);
-
-                var fieldMatcherInstance = (IKeyFieldMatcher)Activator.CreateInstance(keyFieldType, projectedKeyFieldLeft.Item2.Compile(), projectedKeyFieldRight.Item2.Compile());
+                var fieldMatcherInstance = (IKeyFieldMatcher)Activator.CreateInstance(keyFieldType, projectedKeyFieldLeft.Compile(), projectedKeyFieldRight.Compile());
                 keyFieldMtchers.Add(fieldMatcherInstance);
             }
 
-            var keyFieldsMeta = new KeyFieldsMeta(leftKeyFieldNames, rightKeyFieldNames,
+            var keyFieldsMeta = new KeyFieldsMeta(_leftKeyFieldNames, _rightKeyFieldNames,
                                  (ISchema leftSchema, int leftRowid, ISchema rightSchema, int rightRowid) =>
                                  {
                                      foreach (var keyFieldMatcher in keyFieldMtchers)
@@ -66,7 +71,7 @@ namespace Projector.Data.Join
             return keyFieldsMeta;
         }
 
-        private List<Tuple<string, LambdaExpression>> GenerateFieldAccessor<T1, T2>(Expression<Func<T1, T2>> keySelecter)
+        private List<LambdaExpression> GenerateFieldAccessor<T1, T2>(Expression<Func<T1, T2>> keySelecter)
         {
             if (keySelecter.Body.NodeType == ExpressionType.New)
             {
@@ -79,12 +84,11 @@ namespace Projector.Data.Join
             else
             {
                 var node = keySelecter.Body;
-                var projectedFieldName = "";
                 var typeOfvalue = node.Type;
 
-                return new List<Tuple<string, LambdaExpression>>
+                return new List<LambdaExpression>
                 {
-                    Tuple.Create(projectedFieldName, GenerateField(typeOfvalue, node))
+                     GenerateField(typeOfvalue, node)
                 };
             }
         }
@@ -96,38 +100,34 @@ namespace Projector.Data.Join
             return Expression.Lambda(typeOfFunc, Visit(expression), _schemaParameter, _idParameter);
         }
 
-        private List<Tuple<string, LambdaExpression>> GenerateFieldAccessorForAnonymousType(NewExpression node)
+        private List<LambdaExpression> GenerateFieldAccessorForAnonymousType(NewExpression node)
         {
-            var projectedKeyFields = new List<Tuple<string, LambdaExpression>>();
-            // this is for anonymous types only
-            if (node.Members != null)
-            {
-                for (int i = 0; i < node.Members.Count; i++)
-                {
-                    var member = node.Members[i];
-                    var valueExpression = node.Arguments[i];
-                    var projectedFieldName = member.Name;
-                    var typeOfvalue = valueExpression.Type;
+            var projectedKeyFields = new List<LambdaExpression>();
 
-                    projectedKeyFields.Add(Tuple.Create(projectedFieldName, GenerateField(typeOfvalue, valueExpression)));
-                }
+            for (int i = 0; i < node.Members.Count; i++)
+            {
+                var member = node.Members[i];
+                var valueExpression = node.Arguments[i];
+                var typeOfvalue = valueExpression.Type;
+
+                projectedKeyFields.Add(GenerateField(typeOfvalue, valueExpression));
             }
+
 
             return projectedKeyFields;
         }
 
-        private List<Tuple<string, LambdaExpression>> GenerateFieldAccessorForConcreteType(MemberInitExpression node)
+        private List<LambdaExpression> GenerateFieldAccessorForConcreteType(MemberInitExpression node)
         {
-            var projectedKeyFields = new List<Tuple<string, LambdaExpression>>();
+            var projectedKeyFields = new List<LambdaExpression>();
 
             foreach (var nodeBinding in node.Bindings)
             {
                 var member = (MemberAssignment)nodeBinding;
                 var valueExpression = member.Expression;
-                var projectedFieldName = member.Member.Name;
                 var typeOfvalue = valueExpression.Type;
 
-                projectedKeyFields.Add(Tuple.Create(projectedFieldName, GenerateField(typeOfvalue, valueExpression)));
+                projectedKeyFields.Add(GenerateField(typeOfvalue, valueExpression));
             }
 
             return projectedKeyFields;
@@ -136,6 +136,16 @@ namespace Projector.Data.Join
         protected override Expression VisitMember(MemberExpression node)
         {
             var oldFieldName = node.Member.Name;
+
+            if (_left)
+            {
+                _leftKeyFieldNames.Add(oldFieldName);
+            }
+            else
+            {
+                _rightKeyFieldNames.Add(oldFieldName);
+            }
+
 
             var genericMethodInfo = _getFieldMethodInfo.MakeGenericMethod(node.Type);
             var fieldAccessExpression = Expression.Call(_schemaParameter, genericMethodInfo, Expression.Constant(oldFieldName, typeof(string)));

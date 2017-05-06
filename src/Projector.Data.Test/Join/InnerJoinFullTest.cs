@@ -1,15 +1,469 @@
 ﻿using Projector.Data.Join;
 using Projector.Data.Tables;
 using Projector.Data.Test.Helpers;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Xunit;
 
 namespace Projector.Data.Test.Join
 {
+    /// <summary>
+    /// Cases we need to cover here for both left and right tables:
+    /// 1. Joined row
+    /// 1.1 Delete of the row
+    /// 1.2 Update of the non-key field
+    /// 1.3 Update of the key field - join removed
+    /// 1.4 Update of the key field - join recreated to another matching row
+    /// 2. Non joined row
+    /// 2.1 Delete of the row
+    /// 2.2 Update of the non-key field
+    /// 2.3 Update of the key field - join created
+    /// 2.4 Update of the key field - join not created - original row stayed unmatched
+    /// </summary>
     public class InnerJoinFullTest
     {
+        [Fact]
+        public void WhenTwoTablesAreEmptyAndWeAddRowToTheLeftThisRowShouldNotTriggerAnything()
+        {
+            // setup
+
+            var personTable = new Table<Person>(10);
+            var personAddressTable = new Table<PersonAddress>(3);
+
+            var join = personTable.InnerJoin(personAddressTable, person => person.Name, personAddress => personAddress.Name, (person, personAddress) => new { person.Name, person.Age, personAddress.Street, personAddress.HouseNumber });
+
+            var testConsumer = new TestConsumer();
+
+            join.AddConsumer(testConsumer);
+
+
+            // call
+
+            // let's have some people here
+            var newRowId = personTable.NewRow();
+            personTable.Set(newRowId, "Name", "Max");
+            personTable.Set(newRowId, "Age", 33);
+
+            personTable.FireChanges();
+
+
+            // check
+
+            // initial
+            Assert.Equal(0, testConsumer.RowCount);
+        }
+
+        [Fact]
+        public void WhenTwoTablesAreEmptyAndWeAddRowToTheRightThisRowShouldNotTriggerAnything()
+        {
+            // setup
+
+            var personTable = new Table<Person>(10);
+
+            var personAddressTable = new Table<PersonAddress>(3);
+
+            var join = personTable.InnerJoin(personAddressTable, person => person.Name, personAddress => personAddress.Name, (person, personAddress) => new { person.Name, person.Age, personAddress.Street, personAddress.HouseNumber });
+
+            var testConsumer = new TestConsumer();
+
+            join.AddConsumer(testConsumer);
+
+
+            // call
+
+            // let's have some people here
+            var newRowId = personAddressTable.NewRow();
+            personAddressTable.Set(newRowId, "Name", "Max");
+            personAddressTable.Set(newRowId, "HouseNumber", 33);
+
+            personAddressTable.FireChanges();
+
+
+            // check
+
+            // initial
+            Assert.Equal(0, testConsumer.RowCount);
+        }
+
+        [Fact]
+        public void WhenLeftTableContainsRowsAndWeAddNonMatchingRowToTheRightThisRowShouldNotTriggerAnything()
+        {
+            // setup
+
+            var personTable = new Table<Person>(10);
+
+            var newRowId = personTable.NewRow();
+            personTable.Set(newRowId, "Name", "Max");
+            personTable.Set(newRowId, "Age", 33);
+
+            personTable.FireChanges();
+
+            var personAddressTable = new Table<PersonAddress>(3);
+
+            var join = personTable.InnerJoin(personAddressTable, person => person.Name, personAddress => personAddress.Name, (person, personAddress) => new { person.Name, person.Age, personAddress.Street, personAddress.HouseNumber });
+
+            var testConsumer = new TestConsumer();
+
+            join.AddConsumer(testConsumer);
+
+
+            // call
+
+            // let's have some people here
+            newRowId = personAddressTable.NewRow();
+            personAddressTable.Set(newRowId, "Name", "Joe");
+            personAddressTable.Set(newRowId, "HouseNumber", 33);
+
+            personAddressTable.FireChanges();
+
+
+            // check
+
+            // initial
+            Assert.Equal(0, testConsumer.RowCount);
+        }
+
+        [Fact]
+        public void WhenRightTableContainsRowsAndWeAddNonMatchingRowToTheLeftThisRowShouldNotTriggerAnything()
+        {
+            // setup
+
+            var personTable = new Table<Person>(10);
+
+            var personAddressTable = new Table<PersonAddress>(3);
+
+            var newRowId = personAddressTable.NewRow();
+            personAddressTable.Set(newRowId, "Name", "Joe");
+            personAddressTable.Set(newRowId, "HouseNumber", 33);
+
+            personAddressTable.FireChanges();
+
+            var join = personTable.InnerJoin(personAddressTable, person => person.Name, personAddress => personAddress.Name, (person, personAddress) => new { person.Name, person.Age, personAddress.Street, personAddress.HouseNumber });
+
+            var testConsumer = new TestConsumer();
+
+            join.AddConsumer(testConsumer);
+
+
+            // call
+
+            newRowId = personTable.NewRow();
+            personTable.Set(newRowId, "Name", "Max");
+            personTable.Set(newRowId, "Age", 33);
+
+            personTable.FireChanges();
+
+
+            // check
+
+            // initial
+            Assert.Equal(0, testConsumer.RowCount);
+        }
+
+        [Fact]
+        public void WhenLeftTableContainsRowsAndWeAddMatchingRowToTheRightThisRowShouldTriggerJoinedRow()
+        {
+            // setup
+
+            var personTable = new Table<Person>(10);
+
+            var newRowId = personTable.NewRow();
+            personTable.Set(newRowId, "Name", "Max");
+            personTable.Set(newRowId, "Age", 33);
+
+            personTable.FireChanges();
+
+            var personAddressTable = new Table<PersonAddress>(3);
+
+            var join = personTable.InnerJoin(personAddressTable, person => person.Name, personAddress => personAddress.Name, (person, personAddress) => new { person.Name, person.Age, personAddress.Street, personAddress.HouseNumber });
+
+            var testConsumer = new TestConsumer();
+
+            join.AddConsumer(testConsumer);
+
+
+            // call
+
+            newRowId = personAddressTable.NewRow();
+            personAddressTable.Set(newRowId, "Name", "Max");
+            personAddressTable.Set(newRowId, "HouseNumber", 33);
+
+            personAddressTable.FireChanges();
+
+
+            // check
+
+            // initial
+            Assert.Equal(1, testConsumer.RowCount);
+        }
+
+        [Fact]
+        public void WhenRightTableContainsRowsAndWeAddMatchingRowToTheLeftThisRowShouldTriggerJoinedRow()
+        {
+            // setup
+
+            var personTable = new Table<Person>(10);
+
+            var personAddressTable = new Table<PersonAddress>(3);
+
+            var newRowId = personAddressTable.NewRow();
+            personAddressTable.Set(newRowId, "Name", "Joe");
+            personAddressTable.Set(newRowId, "HouseNumber", 33);
+
+            personAddressTable.FireChanges();
+
+            var join = personTable.InnerJoin(personAddressTable, person => person.Name, personAddress => personAddress.Name, (person, personAddress) => new { person.Name, person.Age, personAddress.Street, personAddress.HouseNumber });
+
+            var testConsumer = new TestConsumer();
+
+            join.AddConsumer(testConsumer);
+
+
+            // call
+
+            newRowId = personTable.NewRow();
+            personTable.Set(newRowId, "Name", "Joe");
+            personTable.Set(newRowId, "Age", 33);
+
+            personTable.FireChanges();
+
+
+            // check
+
+            // initial
+            Assert.Equal(1, testConsumer.RowCount);
+        }
+
+        [Fact]
+        public void WhenThereIsJoinedRowAndWeRemoveLeftMatchingRowJoinedRowShouldBeRemoved()
+        {
+            // setup
+
+            var personTable = new Table<Person>(10);
+
+            var personAddressTable = new Table<PersonAddress>(3);
+
+            var newRowId = personAddressTable.NewRow();
+            personAddressTable.Set(newRowId, "Name", "Joe");
+            personAddressTable.Set(newRowId, "HouseNumber", 33);
+
+            personAddressTable.FireChanges();
+
+            newRowId = personTable.NewRow();
+            personTable.Set(newRowId, "Name", "Joe");
+            personTable.Set(newRowId, "Age", 33);
+
+            personTable.FireChanges();
+
+            var join = personTable.InnerJoin(personAddressTable, person => person.Name, personAddress => personAddress.Name, (person, personAddress) => new { person.Name, person.Age, personAddress.Street, personAddress.HouseNumber });
+
+            var testConsumer = new TestConsumer();
+
+            join.AddConsumer(testConsumer);
+
+
+            // call
+
+            personTable.RemoveRow(0);
+
+            personTable.FireChanges();
+
+            // check
+
+            // initial
+            Assert.Equal(0, testConsumer.RowCount);
+        }
+
+        [Fact]
+        public void WhenThereIsJoinedRowAndWeRemoveRightMatchingRowJoinedRowShouldBeRemoved()
+        {
+            // setup
+
+            var personTable = new Table<Person>(10);
+
+            var personAddressTable = new Table<PersonAddress>(3);
+
+            var newRowId = personAddressTable.NewRow();
+            personAddressTable.Set(newRowId, "Name", "Joe");
+            personAddressTable.Set(newRowId, "HouseNumber", 33);
+
+            personAddressTable.FireChanges();
+
+            newRowId = personTable.NewRow();
+            personTable.Set(newRowId, "Name", "Joe");
+            personTable.Set(newRowId, "Age", 33);
+
+            personTable.FireChanges();
+
+            var join = personTable.InnerJoin(personAddressTable, person => person.Name, personAddress => personAddress.Name, (person, personAddress) => new { person.Name, person.Age, personAddress.Street, personAddress.HouseNumber });
+
+            var testConsumer = new TestConsumer();
+
+            join.AddConsumer(testConsumer);
+
+
+            // call
+
+            personAddressTable.RemoveRow(0);
+
+            personAddressTable.FireChanges();
+
+            // check
+
+            // initial
+            Assert.Equal(0, testConsumer.RowCount);
+        }
+
+        [Fact]
+        public void WhenThereIsJoinedRowAndWeUpdateLeftNonSelectedFieldNothingShouldBeTriggered()
+        {
+            // setup
+
+            var personTable = new Table<Person>(10);
+
+            var personAddressTable = new Table<PersonAddress>(3);
+
+            var newRowId = personAddressTable.NewRow();
+            personAddressTable.Set(newRowId, "Name", "Joe");
+            personAddressTable.Set(newRowId, "HouseNumber", 33);
+
+            personAddressTable.FireChanges();
+
+            newRowId = personTable.NewRow();
+            personTable.Set(newRowId, "Name", "Joe");
+            personTable.Set(newRowId, "Age", 33);
+
+            personTable.FireChanges();
+
+            var join = personTable.InnerJoin(personAddressTable, person => person.Name, personAddress => personAddress.Name, (person, personAddress) => new { person.Name, person.Age, personAddress.Street, personAddress.HouseNumber });
+
+            var testConsumer = new TestConsumer();
+
+            join.AddConsumer(testConsumer);
+
+
+            personTable.Set(0, "AnotherFieldWhichIsNotInTheResultFieldSet", 146);
+            personTable.FireChanges();
+
+            // check
+
+            // initial
+            Assert.Equal(0, testConsumer.UpdatedRowCount);
+        }
+
+        [Fact]
+        public void WhenThereIsJoinedRowAndWeUpdateRightNonSelectedFieldNothingShouldBeTriggered()
+        {
+            // setup
+
+            var personTable = new Table<Person>(10);
+
+            var personAddressTable = new Table<PersonAddress>(3);
+
+            var newRowId = personAddressTable.NewRow();
+            personAddressTable.Set(newRowId, "Name", "Joe");
+            personAddressTable.Set(newRowId, "HouseNumber", 33);
+
+            personAddressTable.FireChanges();
+
+            newRowId = personTable.NewRow();
+            personTable.Set(newRowId, "Name", "Joe");
+            personTable.Set(newRowId, "Age", 33);
+
+            personTable.FireChanges();
+
+            var join = personTable.InnerJoin(personAddressTable, person => person.Name, personAddress => personAddress.Name, (person, personAddress) => new { person.Name, person.Age, personAddress.Street, personAddress.HouseNumber });
+
+            var testConsumer = new TestConsumer();
+
+            join.AddConsumer(testConsumer);
+
+
+            // call
+
+            personAddressTable.Set(0, "FieldWhichIsNotInTheResultFieldSet", 145);
+            personAddressTable.FireChanges();
+
+            // check
+
+            // initial
+            Assert.Equal(0, testConsumer.UpdatedRowCount);
+        }
+
+        [Fact]
+        public void WhenThereIsJoinedRowAndWeUpdateLeftSelectedFieldNothingShouldBeTriggered()
+        {
+            // setup
+
+            var personTable = new Table<Person>(10);
+
+            var personAddressTable = new Table<PersonAddress>(3);
+
+            var newRowId = personAddressTable.NewRow();
+            personAddressTable.Set(newRowId, "Name", "Joe");
+            personAddressTable.Set(newRowId, "HouseNumber", 33);
+
+            personAddressTable.FireChanges();
+
+            newRowId = personTable.NewRow();
+            personTable.Set(newRowId, "Name", "Joe");
+            personTable.Set(newRowId, "Age", 33);
+
+            personTable.FireChanges();
+
+            var join = personTable.InnerJoin(personAddressTable, person => person.Name, personAddress => personAddress.Name, (person, personAddress) => new { person.Name, person.Age, personAddress.Street, personAddress.HouseNumber });
+
+            var testConsumer = new TestConsumer();
+
+            join.AddConsumer(testConsumer);
+
+
+            personTable.Set(0, "Age", 146);
+            personTable.FireChanges();
+
+            // check
+
+            // initial
+            Assert.Equal(1, testConsumer.UpdatedRowCount);
+        }
+
+        [Fact]
+        public void WhenThereIsJoinedRowAndWeUpdateRightSelectedFieldNothingShouldBeTriggered()
+        {
+            // setup
+
+            var personTable = new Table<Person>(10);
+
+            var personAddressTable = new Table<PersonAddress>(3);
+
+            var newRowId = personAddressTable.NewRow();
+            personAddressTable.Set(newRowId, "Name", "Joe");
+            personAddressTable.Set(newRowId, "HouseNumber", 33);
+
+            personAddressTable.FireChanges();
+
+            newRowId = personTable.NewRow();
+            personTable.Set(newRowId, "Name", "Joe");
+            personTable.Set(newRowId, "Age", 33);
+
+            personTable.FireChanges();
+
+            var join = personTable.InnerJoin(personAddressTable, person => person.Name, personAddress => personAddress.Name, (person, personAddress) => new { person.Name, person.Age, personAddress.Street, personAddress.HouseNumber });
+
+            var testConsumer = new TestConsumer();
+
+            join.AddConsumer(testConsumer);
+
+
+            // call
+
+            personAddressTable.Set(0, "HouseNumber", 145);
+            personAddressTable.FireChanges();
+
+            // check
+
+            // initial
+            Assert.Equal(1, testConsumer.UpdatedRowCount);
+        }
+
         [Fact]
         public void TwoTablesInnerJoinTest()
         {
@@ -128,6 +582,8 @@ namespace Projector.Data.Test.Join
             public string Name { get; set; }
 
             public int Age { get; set; }
+
+            public int AnotherFieldWhichIsNotInTheResultFieldSet { get; set; }
         }
 
         private class PersonAddress
