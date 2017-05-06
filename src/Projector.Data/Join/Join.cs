@@ -12,8 +12,8 @@ namespace Projector.Data.Join
         private ISchema _leftSchema;
         private ISchema _rightSchema;
 
-        private readonly HashSet<int> _allLeftRowIds;
-        private readonly HashSet<int> _allRightRowIds;
+        private readonly IReadOnlyCollection<int> _allLeftRowIds;
+        private readonly IReadOnlyCollection<int> _allRightRowIds;
 
         private readonly Dictionary<int, List<int>> _leftRowIdToJoinedRowIdMapping;
         private readonly Dictionary<int, List<int>> _rightRowIdToJoinedRowIdMapping;
@@ -41,8 +41,8 @@ namespace Projector.Data.Join
             _joinedRowIdsToLeftRightRowIdsMapping = new Dictionary<int, Tuple<int, int>>();
 
             _currentUpdatedFields = new HashSet<IField>();
-            _allLeftRowIds = new HashSet<int>();
-            _allRightRowIds = new HashSet<int>();
+            _allLeftRowIds = leftSource.RowIds;
+            _allRightRowIds = rightSource.RowIds;
 
             _leftRowIdToJoinedRowIdMapping = new Dictionary<int, List<int>>();
             _rightRowIdToJoinedRowIdMapping = new Dictionary<int, List<int>>();
@@ -180,7 +180,6 @@ namespace Projector.Data.Join
 
             foreach (var id in ids)
             {
-                allLeftIds.Add(id);
                 foreach (var outerRowId in outerIds)
                 {
                     var leftRowId = left ? id : outerRowId;
@@ -203,8 +202,6 @@ namespace Projector.Data.Join
 
             foreach (var id in ids)
             {
-                allLeftIds.Remove(id);
-
                 if (leftRowIdToJoinedRowIdMapping.TryGetValue(id, out List<int> joinedRowIds))
                 {
                     foreach (var joinedRowId in joinedRowIds)

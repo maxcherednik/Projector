@@ -1,4 +1,6 @@
 ﻿
+using System.Collections.Generic;
+
 namespace Projector.Data
 {
     /// <summary>
@@ -18,6 +20,8 @@ namespace Projector.Data
         /// </summary>
         /// <param name="consumer">Instance of the IDataConsumer</param>
         void RemoveConsumer(IDataConsumer consumer);
+
+        IReadOnlyCollection<int> RowIds { get; }
     }
 
     /// <summary>

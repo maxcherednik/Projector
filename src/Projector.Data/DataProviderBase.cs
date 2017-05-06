@@ -13,6 +13,13 @@ namespace Projector.Data
 
         private HashSet<IField> _updatedFields;
 
+        private IReadOnlyCollection<int> _sourceRowIds;
+
+        public DataProviderBase(IReadOnlyCollection<int> sourceRowIds) : this()
+        {
+            _sourceRowIds = sourceRowIds;
+        }
+
         public DataProviderBase()
         {
             UsedIds = new HashSet<int>();
@@ -56,14 +63,17 @@ namespace Projector.Data
         protected void FireChanges()
         {
             var thereWereChanges = false;
-            foreach (var newId in CurrentAddedIds)
+            if (_sourceRowIds == null)
             {
-                UsedIds.Add(newId);
-            }
+                foreach (var newId in CurrentAddedIds)
+                {
+                    UsedIds.Add(newId);
+                }
 
-            foreach (var removeId in CurrentRemovedIds)
-            {
-                UsedIds.Remove(removeId);
+                foreach (var removeId in CurrentRemovedIds)
+                {
+                    UsedIds.Remove(removeId);
+                }
             }
 
             if (CurrentRemovedIds.Count > 0)
@@ -98,9 +108,9 @@ namespace Projector.Data
         {
             consumer.OnSchema(Schema);
 
-            if (UsedIds.Count > 0)
+            if (RowIds.Count > 0)
             {
-                consumer.OnAdd((IReadOnlyCollection<int>)UsedIds);
+                consumer.OnAdd(RowIds);
             }
 
             consumer.OnSyncPoint();
@@ -124,6 +134,8 @@ namespace Projector.Data
         }
 
         public ISchema Schema { get; private set; }
+
+        public IReadOnlyCollection<int> RowIds => _sourceRowIds != null ? _sourceRowIds : (IReadOnlyCollection<int>)UsedIds;
 
         private event Action<IReadOnlyCollection<int>> OnAdd;
         private event Action<IReadOnlyCollection<int>, IReadOnlyCollection<IField>> OnUpdate;
