@@ -13,9 +13,11 @@ namespace Projector.Data.Filter
         private IDataProvider _sourceDataProvider;
 
         private HashSet<int> _usedRowIds;
+        private IReadOnlyCollection<int> _parentRowIds;
 
         public Filter(IDataProvider sourceDataProvider, Tuple<HashSet<string>, Func<ISchema, int, bool>> filterCriteriaMeta)
         {
+            _parentRowIds = sourceDataProvider.RowIds;
             _usedRowIds = new HashSet<int>();
             SetRowIds((IReadOnlyCollection<int>)_usedRowIds);
 
@@ -29,14 +31,24 @@ namespace Projector.Data.Filter
         {
             _fieldsUsedInFilter = filterCriteriaMeta.Item1;
             _filterCriteria = filterCriteriaMeta.Item2;
-            _subscription.Dispose();
 
-            foreach (var id in _usedRowIds)
+            foreach (var id in _parentRowIds)
             {
-                RemoveId(id);
+                var usedBefore = _usedRowIds.Contains(id);
+                var usedAfter = _filterCriteria(Schema, id);
+
+                if (usedBefore && !usedAfter)
+                {
+                    _usedRowIds.Remove(id);
+                    RemoveId(id);
+                }
+                else if (!usedBefore && usedAfter)
+                {
+                    _usedRowIds.Add(id);
+                    AddId(id);
+                }
             }
 
-            _subscription = _sourceDataProvider.AddConsumer(this);
             FireChanges();
         }
 
