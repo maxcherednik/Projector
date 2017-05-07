@@ -12,8 +12,13 @@ namespace Projector.Data.Filter
         private IDisconnectable _subscription;
         private IDataProvider _sourceDataProvider;
 
+        private HashSet<int> _usedRowIds;
+
         public Filter(IDataProvider sourceDataProvider, Tuple<HashSet<string>, Func<ISchema, int, bool>> filterCriteriaMeta)
         {
+            _usedRowIds = new HashSet<int>();
+            SetRowIds((IReadOnlyCollection<int>)_usedRowIds);
+
             _fieldsUsedInFilter = filterCriteriaMeta.Item1;
             _filterCriteria = filterCriteriaMeta.Item2;
             _sourceDataProvider = sourceDataProvider;
@@ -26,7 +31,7 @@ namespace Projector.Data.Filter
             _filterCriteria = filterCriteriaMeta.Item2;
             _subscription.Dispose();
 
-            foreach (var id in UsedIds)
+            foreach (var id in _usedRowIds)
             {
                 RemoveId(id);
             }
@@ -51,6 +56,7 @@ namespace Projector.Data.Filter
             {
                 if (_filterCriteria(Schema, id))
                 {
+                    _usedRowIds.Add(id);
                     AddId(id);
                 }
             }
@@ -65,15 +71,17 @@ namespace Projector.Data.Filter
             {
                 foreach (var id in ids)
                 {
-                    var usedBefore = UsedIds.Contains(id);
+                    var usedBefore = _usedRowIds.Contains(id);
                     var usedAfter = _filterCriteria(Schema, id);
 
                     if (usedBefore && !usedAfter)
                     {
+                        _usedRowIds.Remove(id);
                         RemoveId(id);
                     }
                     else if (!usedBefore && usedAfter)
                     {
+                        _usedRowIds.Add(id);
                         AddId(id);
                     }
                     else if (usedBefore && usedAfter)
@@ -89,7 +97,7 @@ namespace Projector.Data.Filter
                 // which were checked before without rechecking filter criteria
                 foreach (var id in ids)
                 {
-                    if (UsedIds.Contains(id))
+                    if (_usedRowIds.Contains(id))
                     {
                         UpdateId(id);
                         wasUpdated = true;
@@ -110,8 +118,9 @@ namespace Projector.Data.Filter
         {
             foreach (var id in ids)
             {
-                if (UsedIds.Contains(id))
+                if (_usedRowIds.Contains(id))
                 {
+                    _usedRowIds.Remove(id);
                     RemoveId(id);
                 }
             }

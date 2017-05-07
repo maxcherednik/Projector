@@ -16,7 +16,7 @@ namespace Projector.Data.Test.Join
         private ISchema _mockSchemaRight;
         private IField<string> _mockStreetField;
         private IField<int> _mockHouseNumberField;
-        private Dictionary<int, Tuple<int, int>> _rowMap;
+        private Dictionary<int, RowMap> _rowMap;
 
         public ResultSelectorVisitorTest()
         {
@@ -46,9 +46,9 @@ namespace Projector.Data.Test.Join
 
             _mockSchemaRight.GetField<string>("Street").Returns(_mockStreetField);
 
-            _rowMap = new Dictionary<int, Tuple<int, int>>
+            _rowMap = new Dictionary<int, RowMap>
             {
-                { 1, Tuple.Create(125, 13) }
+                { 1, new RowMap(125, 13) }
             };
         }
 

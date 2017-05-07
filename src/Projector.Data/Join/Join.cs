@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace Projector.Data.Join
@@ -39,6 +38,8 @@ namespace Projector.Data.Join
             _freeRows = new HashSet<int>();
 
             _joinedRowIdsToLeftRightRowIdsMapping = new Dictionary<int, RowMap>();
+
+            SetRowIds(new ReadOnlyCollectionWrapper<int>(_joinedRowIdsToLeftRightRowIdsMapping.Keys));
 
             _currentUpdatedFields = new HashSet<IField>();
             _allLeftRowIds = leftSource.RowIds;
@@ -90,7 +91,10 @@ namespace Projector.Data.Join
 
         void _leftChangeTracker_OnUpdated(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> updatedFields)
         {
-            ProcessOnUpdated(ids, updatedFields, true);
+            if (_rightSchema != null)
+            {
+                ProcessOnUpdated(ids, updatedFields, true);
+            }
         }
 
         private void ProcessOnUpdated(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> updatedFields, bool left)
@@ -164,12 +168,18 @@ namespace Projector.Data.Join
 
         void _leftChangeTracker_OnDeleted(IReadOnlyCollection<int> ids)
         {
-            ProcessOnDelete(ids, true);
+            if (_rightSchema != null)
+            {
+                ProcessOnDelete(ids, true);
+            }
         }
 
         void _leftChangeTracker_OnAdded(IReadOnlyCollection<int> ids)
         {
-            ProcessOnAdd(ids, true);
+            if (_rightSchema != null)
+            {
+                ProcessOnAdd(ids, true);
+            }
         }
 
         private void ProcessOnAdd(IReadOnlyCollection<int> ids, bool left)

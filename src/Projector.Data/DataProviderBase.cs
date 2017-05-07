@@ -5,28 +5,23 @@ namespace Projector.Data
 {
     public class DataProviderBase : IDataProvider
     {
-        protected HashSet<int> UsedIds;
-
         protected HashSet<int> CurrentAddedIds;
         protected HashSet<int> CurrentUpdatedIds;
         protected HashSet<int> CurrentRemovedIds;
 
         private HashSet<IField> _updatedFields;
 
-        private IReadOnlyCollection<int> _sourceRowIds;
-
-        public DataProviderBase(IReadOnlyCollection<int> sourceRowIds) : this()
-        {
-            _sourceRowIds = sourceRowIds;
-        }
-
         public DataProviderBase()
         {
-            UsedIds = new HashSet<int>();
             CurrentAddedIds = new HashSet<int>();
             CurrentUpdatedIds = new HashSet<int>();
             CurrentRemovedIds = new HashSet<int>();
             _updatedFields = new HashSet<IField>();
+        }
+
+        protected void SetRowIds(IReadOnlyCollection<int> usedRowIds)
+        {
+            RowIds = usedRowIds;
         }
 
         protected void SetSchema(ISchema schema)
@@ -38,7 +33,7 @@ namespace Projector.Data
         {
             if (!CurrentAddedIds.Add(id))
             {
-                throw new InvalidOperationException("Duplicate key in the 'add'' collection");
+                throw new InvalidOperationException("Duplicate key in the 'add' collection");
             }
         }
 
@@ -63,18 +58,6 @@ namespace Projector.Data
         protected void FireChanges()
         {
             var thereWereChanges = false;
-            if (_sourceRowIds == null)
-            {
-                foreach (var newId in CurrentAddedIds)
-                {
-                    UsedIds.Add(newId);
-                }
-
-                foreach (var removeId in CurrentRemovedIds)
-                {
-                    UsedIds.Remove(removeId);
-                }
-            }
 
             if (CurrentRemovedIds.Count > 0)
             {
@@ -135,7 +118,7 @@ namespace Projector.Data
 
         public ISchema Schema { get; private set; }
 
-        public IReadOnlyCollection<int> RowIds => _sourceRowIds != null ? _sourceRowIds : (IReadOnlyCollection<int>)UsedIds;
+        public IReadOnlyCollection<int> RowIds { get; private set; }
 
         private event Action<IReadOnlyCollection<int>> OnAdd;
         private event Action<IReadOnlyCollection<int>, IReadOnlyCollection<IField>> OnUpdate;

@@ -14,7 +14,7 @@ namespace Projector.Data.Test.Join
             var mockFilterAccessor = Substitute.For<Func<ISchema, int, ISchema, int, long>>();
             var leftSchema = Substitute.For<ISchema>();
             var rightSchema = Substitute.For<ISchema>();
-            var rowIdMap = Substitute.For<IDictionary<int, Tuple<int, int>>>();
+            var rowIdMap = Substitute.For<IDictionary<int, RowMap>>();
 
 
             var joinProjectedField = new JoinProjectedField<long>("ProjectedName", mockFilterAccessor);
@@ -29,7 +29,7 @@ namespace Projector.Data.Test.Join
 
             mockFilterAccessor(leftSchema, 10, rightSchema, 20).Returns(42);
 
-            rowIdMap[123].Returns(Tuple.Create(10, 20));
+            rowIdMap[123].Returns(new RowMap(10, 20));
 
             var fieldValue = joinProjectedField.GetValue(123);
 

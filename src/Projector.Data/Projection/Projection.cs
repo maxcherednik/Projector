@@ -13,8 +13,8 @@ namespace Projector.Data.Projection
         private HashSet<IField> _currentUpdatedFields;
 
         public Projection(IDataProvider sourceDataProvider, Tuple<IDictionary<string, ISet<string>>, IDictionary<string, IField>> projectionFieldsMeta)
-            :base(sourceDataProvider.RowIds)
         {
+            SetRowIds(sourceDataProvider.RowIds);
             _currentUpdatedFields = new HashSet<IField>();
             _oldFieldNamesToNewFieldNamesMapping = projectionFieldsMeta.Item1;
             _projectionFields = projectionFieldsMeta.Item2;

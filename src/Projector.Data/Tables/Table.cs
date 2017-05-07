@@ -8,11 +8,15 @@ namespace Projector.Data.Tables
 
         private readonly List<int> _idsUpdated;
 
+        private HashSet<int> _usedRowIds;
+
         public Table(IWritebleSchema schema)
         {
+            _usedRowIds = new HashSet<int>();
             _idsUpdated = new List<int>();
             _schema = schema;
             SetSchema(_schema);
+            SetRowIds((IReadOnlyCollection<int>)_usedRowIds);
         }
 
         public void Set<T>(int rowIndex, string name, T value)
@@ -29,6 +33,7 @@ namespace Projector.Data.Tables
         public int NewRow()
         {
             var newRowId = _schema.GetNewRowId();
+            _usedRowIds.Add(newRowId);
             AddId(newRowId);
             return newRowId;
         }
@@ -36,6 +41,7 @@ namespace Projector.Data.Tables
         public void RemoveRow(int rowIndex)
         {
             _schema.Remove(rowIndex);
+            _usedRowIds.Remove(rowIndex);
             RemoveId(rowIndex);
         }
 
