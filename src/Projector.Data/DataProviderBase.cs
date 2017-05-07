@@ -1,81 +1,102 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
 
 namespace Projector.Data
 {
     public class DataProviderBase : IDataProvider
     {
-        private ISchema _schema;
+        protected HashSet<int> CurrentAddedIds;
+        protected HashSet<int> CurrentUpdatedIds;
+        protected HashSet<int> CurrentRemovedIds;
 
-        protected HashSet<int> UsedIds;
+        private HashSet<IField> _updatedFields;
 
-        private HashSet<int> _currentAddedIds;
-        private HashSet<int> _currentRemovedIds;
-
-        public DataProviderBase ()
+        public DataProviderBase()
         {
-            UsedIds = new HashSet<int> ();
-            _currentAddedIds = new HashSet<int> ();
-            _currentRemovedIds = new HashSet<int> ();
+            CurrentAddedIds = new HashSet<int>();
+            CurrentUpdatedIds = new HashSet<int>();
+            CurrentRemovedIds = new HashSet<int>();
+            _updatedFields = new HashSet<IField>();
         }
 
-        protected void SetSchema (ISchema schema)
+        protected void SetRowIds(IReadOnlyCollection<int> usedRowIds)
         {
-            _schema = schema;
+            RowIds = usedRowIds;
         }
 
-        protected void AddId (int id)
+        protected void SetSchema(ISchema schema)
         {
-            if (!_currentAddedIds.Add (id)) {
-                throw new InvalidOperationException ("Duplicate key in the add collection");
+            Schema = schema;
+        }
+
+        protected void AddId(int id)
+        {
+            if (!CurrentAddedIds.Add(id))
+            {
+                throw new InvalidOperationException("Duplicate key in the 'add' collection");
             }
         }
 
-        protected void RemoveId (int id)
+        protected void UpdateId(int id)
         {
-            if (!_currentRemovedIds.Add (id)) {
-                throw new InvalidOperationException ("Duplicate key in the remove collection");
+            CurrentUpdatedIds.Add(id);
+        }
+
+        protected void AddUpdatedField(IField field)
+        {
+            _updatedFields.Add(field);
+        }
+
+        protected void RemoveId(int id)
+        {
+            if (!CurrentRemovedIds.Add(id))
+            {
+                throw new InvalidOperationException("Duplicate key in the 'remove' collection");
             }
         }
 
-        protected void FireChanges ()
+        protected void FireChanges()
         {
             var thereWereChanges = false;
-            foreach (var newId in _currentAddedIds) {
-                UsedIds.Add (newId);
-            }
 
-            foreach (var removeId in _currentRemovedIds) {
-                UsedIds.Remove (removeId);
-            }
-
-            if (_currentRemovedIds.Count > 0) {
+            if (CurrentRemovedIds.Count > 0)
+            {
                 thereWereChanges = true;
-                FireOnDelete (_currentRemovedIds.ToList ());
-                _currentRemovedIds.Clear ();
+                FireOnDelete((IReadOnlyCollection<int>)CurrentRemovedIds);
+                CurrentRemovedIds.Clear();
             }
 
-            if (_currentAddedIds.Count > 0) {
+            if (CurrentAddedIds.Count > 0)
+            {
                 thereWereChanges = true;
-                FireOnAdd (_currentAddedIds.ToList ());
-                _currentAddedIds.Clear ();
+                FireOnAdd((IReadOnlyCollection<int>)CurrentAddedIds);
+                CurrentAddedIds.Clear();
             }
 
-            if (thereWereChanges) {
-                FireOnSyncPoint ();
+            if (CurrentUpdatedIds.Count > 0)
+            {
+                thereWereChanges = true;
+                FireOnUpdate((IReadOnlyCollection<int>)CurrentUpdatedIds, (IReadOnlyCollection<IField>)_updatedFields);
+                CurrentUpdatedIds.Clear();
+                _updatedFields.Clear();
+            }
+
+            if (thereWereChanges)
+            {
+                FireOnSyncPoint();
             }
         }
 
-        public IDisconnectable AddConsumer (IDataConsumer consumer)
+        public IDisconnectable AddConsumer(IDataConsumer consumer)
         {
-            consumer.OnSchema (_schema);
+            consumer.OnSchema(Schema);
 
-            if (UsedIds.Count > 0) {
-                consumer.OnAdd (UsedIds.ToList ());
+            if (RowIds.Count > 0)
+            {
+                consumer.OnAdd(RowIds);
             }
 
-            consumer.OnSyncPoint ();
+            consumer.OnSyncPoint();
 
             OnAdd += consumer.OnAdd;
             OnDelete += consumer.OnDelete;
@@ -83,10 +104,10 @@ namespace Projector.Data
             OnSchema += consumer.OnSchema;
             OnSyncPoint += consumer.OnSyncPoint;
 
-            return new Disconnectable (this, consumer);
+            return new Disconnectable(this, consumer);
         }
 
-        public void RemoveConsumer (IDataConsumer consumer)
+        public void RemoveConsumer(IDataConsumer consumer)
         {
             OnAdd -= consumer.OnAdd;
             OnDelete -= consumer.OnDelete;
@@ -95,52 +116,39 @@ namespace Projector.Data
             OnSyncPoint -= consumer.OnSyncPoint;
         }
 
-        public ISchema Schema { get { return _schema; } }
+        public ISchema Schema { get; private set; }
 
-        private event Action<IList<int>> OnAdd;
-        private event Action<IList<int>, IList<IField>> OnUpdate;
-        private event Action<IList<int>> OnDelete;
+        public IReadOnlyCollection<int> RowIds { get; private set; }
+
+        private event Action<IReadOnlyCollection<int>> OnAdd;
+        private event Action<IReadOnlyCollection<int>, IReadOnlyCollection<IField>> OnUpdate;
+        private event Action<IReadOnlyCollection<int>> OnDelete;
         private event Action<ISchema> OnSchema;
         private event Action OnSyncPoint;
 
-        private void FireOnAdd (IList<int> ids)
+        private void FireOnAdd(IReadOnlyCollection<int> ids)
         {
-            var handler = OnAdd;
-            if (handler != null) {
-                handler (ids);
-            }
+            OnAdd?.Invoke(ids);
         }
 
-        private void FireOnDelete (IList<int> ids)
+        private void FireOnDelete(IReadOnlyCollection<int> ids)
         {
-            var handler = OnDelete;
-            if (handler != null) {
-                handler (ids);
-            }
+            OnDelete?.Invoke(ids);
         }
 
-        private void FireOnUpdate (IList<int> ids, IList<IField> fields)
+        private void FireOnUpdate(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> fields)
         {
-            var handler = OnUpdate;
-            if (handler != null) {
-                handler (ids, fields);
-            }
+            OnUpdate?.Invoke(ids, fields);
         }
 
-        private void FireOnSchema (ISchema schema)
+        private void FireOnSchema(ISchema schema)
         {
-            var handler = OnSchema;
-            if (handler != null) {
-                handler (schema);
-            }
+            OnSchema?.Invoke(schema);
         }
 
-        private void FireOnSyncPoint ()
+        private void FireOnSyncPoint()
         {
-            var handler = OnSyncPoint;
-            if (handler != null) {
-                handler ();
-            }
+            OnSyncPoint?.Invoke();
         }
     }
 }

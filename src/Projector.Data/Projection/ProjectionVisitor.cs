@@ -10,24 +10,28 @@ namespace Projector.Data.Projection
         private ParameterExpression _schemaParameter;
         private ParameterExpression _idParameter;
         private MethodInfo _getFieldMethodInfo;
-        private Dictionary<string, IField> _projectedFields;
+        private IDictionary<string, IField> _projectedFields;
+        private IDictionary<string, ISet<string>> _oldFieldNamesToNewFieldNamesMapping;
+        private string _currentProjectedName;
+        private bool _skip;
 
         public ProjectionVisitor()
         {
             _schemaParameter = Expression.Parameter(typeof(ISchema), "schema");
             _idParameter = Expression.Parameter(typeof(int), "id");
 
-            _getFieldMethodInfo = typeof(ISchema).GetMethod("GetField");
+            _getFieldMethodInfo = typeof(ISchema).GetTypeInfo().GetDeclaredMethod("GetField");
             _projectedFields = new Dictionary<string, IField>();
+            _oldFieldNamesToNewFieldNamesMapping = new Dictionary<string, ISet<string>>();
         }
 
-        public IDictionary<string, IField> GenerateProjection<Tsource, TDest>(Expression<Func<Tsource, TDest>> transformerExpression)
+        public Tuple<IDictionary<string, ISet<string>>, IDictionary<string, IField>> GenerateProjection<Tsource, TDest>(Expression<Func<Tsource, TDest>> transformerExpression)
         {
             _projectedFields.Clear();
 
             Visit(transformerExpression);
 
-            return _projectedFields;
+            return Tuple.Create(_oldFieldNamesToNewFieldNamesMapping, _projectedFields);
         }
 
         protected override MemberAssignment VisitMemberAssignment(MemberAssignment node)
@@ -42,6 +46,7 @@ namespace Projector.Data.Projection
 
         private void GenerateField(string projectedFieldName, Type typeOfValue, Expression expression)
         {
+            _currentProjectedName = projectedFieldName;
             var projectedFieldType = typeof(ProjectedField<>).MakeGenericType(typeOfValue);
 
             var typeOfFunc = typeof(Func<,,>).MakeGenericType(typeof(ISchema), typeof(int), typeOfValue);
@@ -55,6 +60,7 @@ namespace Projector.Data.Projection
 
         protected override Expression VisitNew(NewExpression node)
         {
+            // this is for anonymous types only
             if (node.Members != null)
             {
                 for (int i = 0; i < node.Members.Count; i++)
@@ -66,19 +72,34 @@ namespace Projector.Data.Projection
 
                     GenerateField(projectedFieldName, typeOfvalue, valueExpression);
                 }
-            }
 
+                _skip = true;
+            }
+            
             return base.VisitNew(node);
         }
 
         protected override Expression VisitMember(MemberExpression node)
         {
+            if(_skip)
+            {
+                return base.VisitMember(node);
+            }
+
+            var oldFieldName = node.Member.Name;
+            if (!_oldFieldNamesToNewFieldNamesMapping.TryGetValue(oldFieldName, out ISet<string> newFieldNames))
+            {
+                newFieldNames = new HashSet<string>();
+                _oldFieldNamesToNewFieldNamesMapping.Add(oldFieldName, newFieldNames);
+            }
+            newFieldNames.Add(_currentProjectedName);
+
             var genericMethodInfo = _getFieldMethodInfo.MakeGenericMethod(node.Type);
-            var fieldAccessExpression = Expression.Call(_schemaParameter, genericMethodInfo, _idParameter, Expression.Constant(node.Member.Name, typeof(string)));
+            var fieldAccessExpression = Expression.Call(_schemaParameter, genericMethodInfo, Expression.Constant(oldFieldName, typeof(string)));
 
-            var valueAccessMemberInfo = genericMethodInfo.ReturnType.GetMember("Value")[0];
+            var valueAccessMemberInfo = genericMethodInfo.ReturnType.GetTypeInfo().GetDeclaredMethod("GetValue");
 
-            var valueAccessExpression = Expression.MakeMemberAccess(fieldAccessExpression, valueAccessMemberInfo);
+            var valueAccessExpression = Expression.Call(fieldAccessExpression, valueAccessMemberInfo, _idParameter);
             return valueAccessExpression;
         }
     }

@@ -16,22 +16,28 @@ namespace Projector.Data.Projection
             _columnList = new List<IField>(_data.Values);
         }
 
-
         public IReadOnlyList<IField> Columns
         {
             get { return _columnList; }
         }
 
-        public IField<T> GetField<T>(int id, string name)
+        public IField<T> GetField<T>(string name)
         {
-            IField projectionField;
-            if (_data.TryGetValue(name, out projectionField))
+            if (_data.TryGetValue(name, out IField projectionField))
             {
                 var projectedFieldImpl = (ProjectedField<T>)projectionField;
                 projectedFieldImpl.SetSchema(_sourceSchema);
-                projectedFieldImpl.SetCurrentRow(id);
                 return projectedFieldImpl;
+            }
 
+            throw new InvalidOperationException("Can't find column name: '" + name + "'");
+        }
+
+        public IField GetFieldMeta(string name)
+        {
+            if (_data.TryGetValue(name, out IField field))
+            {
+                return field;
             }
 
             throw new InvalidOperationException("Can't find column name: '" + name + "'");

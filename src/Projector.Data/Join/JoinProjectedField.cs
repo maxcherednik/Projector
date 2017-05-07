@@ -1,25 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Projector.Data.Join
 {
     public class JoinProjectedField<TData> : IField<TData>
     {
-        private readonly string _name;
-        private readonly Func<ISchema, int,ISchema, int, TData> _fieldAccessor;
+        private readonly Func<ISchema, int, ISchema, int, TData> _fieldAccessor;
 
         private ISchema _leftSchema;
         private ISchema _rightSchema;
-        
-        private int _leftId;
-        private int _rightId;
+
+        private IDictionary<int, RowMap> _rowIdMap;
 
         public JoinProjectedField(string name, Func<ISchema, int, ISchema, int, TData> fieldAccessor)
         {
-            _name = name;
+            Name = name;
             _fieldAccessor = fieldAccessor;
         }
 
@@ -33,30 +28,19 @@ namespace Projector.Data.Join
             _rightSchema = schema;
         }
 
-        public void SetLeftCurrentRow(int id)
+        public void SetRowIdMap(IDictionary<int, RowMap> rowIdMap)
         {
-            _leftId = id;
+            _rowIdMap = rowIdMap;
         }
 
-        public void SetRightCurrentRow(int id)
+        public TData GetValue(int rowId)
         {
-            _rightId = id;
+            var oldRowIds = _rowIdMap[rowId];
+            return _fieldAccessor(_leftSchema, oldRowIds.LeftRowId, _rightSchema, oldRowIds.RightRowId);
         }
 
-        public TData Value
-        {
-            get { return _fieldAccessor(_leftSchema,_leftId,_rightSchema, _rightId); }
-        }
+        public Type DataType => typeof(TData);
 
-
-        public Type DataType
-        {
-            get { return typeof(TData); }
-        }
-
-        public string Name
-        {
-            get { return _name; }
-        }
+        public string Name { get; }
     }
 }

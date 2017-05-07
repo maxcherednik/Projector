@@ -6,27 +6,33 @@ namespace Projector.Data.Projection
     public class Projection : DataProviderBase, IDataConsumer
     {
         private IDictionary<string, IField> _projectionFields;
+        private IDictionary<string, ISet<string>> _oldFieldNamesToNewFieldNamesMapping;
+
         private IDisconnectable _subscription;
 
-        public Projection(IDataProvider sourceDataProvider, IDictionary<string, IField> projectionFields)
+        private HashSet<IField> _currentUpdatedFields;
+
+        public Projection(IDataProvider sourceDataProvider, Tuple<IDictionary<string, ISet<string>>, IDictionary<string, IField>> projectionFieldsMeta)
         {
-            _projectionFields = projectionFields;
+            SetRowIds(sourceDataProvider.RowIds);
+            _currentUpdatedFields = new HashSet<IField>();
+            _oldFieldNamesToNewFieldNamesMapping = projectionFieldsMeta.Item1;
+            _projectionFields = projectionFieldsMeta.Item2;
             _subscription = sourceDataProvider.AddConsumer(this);
         }
 
         public void OnSchema(ISchema schema)
         {
-
             var projectedSchema = new ProjectionSchema(schema, _projectionFields);
             SetSchema(projectedSchema);
         }
 
         public void OnSyncPoint()
         {
-            base.FireChanges();
+            FireChanges();
         }
 
-        public void OnAdd(IList<int> ids)
+        public void OnAdd(IReadOnlyCollection<int> ids)
         {
             foreach (var id in ids)
             {
@@ -34,19 +40,40 @@ namespace Projector.Data.Projection
             }
         }
 
-        public void OnUpdate(IList<int> ids, IList<IField> updatedFields)
+        public void OnUpdate(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> updatedFields)
         {
-            throw new NotImplementedException();
+            _currentUpdatedFields.Clear();
+            foreach (var updatedField in updatedFields)
+            {
+                if (_oldFieldNamesToNewFieldNamesMapping.TryGetValue(updatedField.Name, out ISet<string> newFieldNames))
+                {
+                    foreach (var newFieldName in newFieldNames)
+                    {
+                        _currentUpdatedFields.Add(Schema.GetFieldMeta(newFieldName));
+                    }
+                }
+            }
+
+            if (_currentUpdatedFields.Count > 0)
+            {
+                foreach (var id in ids)
+                {
+                    UpdateId(id);
+                }
+
+                foreach (var updatedField in _currentUpdatedFields)
+                {
+                    AddUpdatedField(updatedField);
+                }
+            }
         }
 
-        public void OnDelete(IList<int> ids)
+        public void OnDelete(IReadOnlyCollection<int> ids)
         {
             foreach (var id in ids)
             {
                 RemoveId(id);
             }
         }
-
-
     }
 }

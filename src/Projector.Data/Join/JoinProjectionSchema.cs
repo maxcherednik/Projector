@@ -1,45 +1,48 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Projector.Data.Join
 {
-    class JoinProjectionSchema: ISchema
+    class JoinProjectionSchema : ISchema
     {
-        private readonly ISchema _sourceSchema;
         private readonly IDictionary<string, IField> _data;
-        private readonly List<IField> _columnList;
+        private IDictionary<int, RowMap> _joinedRowIdsToLeftRightRowIdsMapping;
 
-        public JoinProjectionSchema(ISchema schema, IDictionary<string, IField> projectionFields)
+        public JoinProjectionSchema(IDictionary<string, IField> projectionFields, IDictionary<int, RowMap> joinedRowIdsToLeftRightRowIdsMapping)
         {
-            _sourceSchema = schema;
             _data = projectionFields;
-            _columnList = new List<IField>(_data.Values);
+            _joinedRowIdsToLeftRightRowIdsMapping = joinedRowIdsToLeftRightRowIdsMapping;
+            Columns = new List<IField>(_data.Values);
         }
 
+        public IReadOnlyList<IField> Columns { get; }
 
-        public IReadOnlyList<IField> Columns
+        public IField<T> GetField<T>(string name)
         {
-            get { return _columnList; }
-        }
-
-        public IField<T> GetField<T>(int id, string name)
-        {
-            IField projectionField;
-            if (_data.TryGetValue(name, out projectionField))
+            if (_data.TryGetValue(name, out IField projectionField))
             {
                 var projectedFieldImpl = (JoinProjectedField<T>)projectionField;
-                projectedFieldImpl.SetLeftSchema(_sourceSchema);
-                projectedFieldImpl.SetRightSchema(_sourceSchema);
-                projectedFieldImpl.SetLeftCurrentRow(id);
-                projectedFieldImpl.SetRightCurrentRow(id);
+                projectedFieldImpl.SetLeftSchema(LeftSchema);
+                projectedFieldImpl.SetRightSchema(RightSchema);
+                projectedFieldImpl.SetRowIdMap(_joinedRowIdsToLeftRightRowIdsMapping);
                 return projectedFieldImpl;
-
             }
 
             throw new InvalidOperationException("Can't find column name: '" + name + "'");
         }
+
+        public IField GetFieldMeta(string name)
+        {
+            if (_data.TryGetValue(name, out IField field))
+            {
+                return field;
+            }
+
+            throw new InvalidOperationException("Can't find column name: '" + name + "'");
+        }
+
+        public ISchema LeftSchema { get; set; }
+
+        public ISchema RightSchema { get; set; }
     }
 }

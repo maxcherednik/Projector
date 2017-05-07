@@ -1,27 +1,25 @@
 ﻿using System.Reflection;
 using System;
 
-
 namespace Projector.Data.Tables
 {
     public class Table<T> : Table, IDataProvider<T>
     {
-        public Table(int capacity)
-            : base(CreateSchema<T>(capacity))
+        public Table(int capacity) : base(CreateSchema<T>(capacity))
         {
 
         }
 
-        public Table()
-            : this(1024)
+        public Table() : this(1024)
         {
+
         }
 
         private static Schema CreateSchema<Tsource>(int capacity)
         {
             var t = typeof(Tsource);
 
-            var propInfos = t.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            var propInfos = t.GetTypeInfo().DeclaredProperties;
 
             var schema = new Schema(capacity);
 

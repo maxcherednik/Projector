@@ -1,12 +1,11 @@
 ﻿using NSubstitute;
-using NUnit.Framework;
 using Projector.Data.Filter;
 using Projector.Data.Test.Helpers;
 using System.Collections.Generic;
+using Xunit;
 
 namespace Projector.Data.Test.Filter
 {
-    [TestFixture]
     class FilterTest
     {
         private Filter<Client> _filter;
@@ -17,8 +16,7 @@ namespace Projector.Data.Test.Filter
 
         private IDataConsumer _filterConsumer;
 
-        [SetUp]
-        public void InitContext()
+        public FilterTest()
         {
             _ids = new List<int> { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
@@ -41,14 +39,40 @@ namespace Projector.Data.Test.Filter
             _filter = new Filter<Client>(_dataProvider, x => true);
         }
 
-        [Test]
+        [Fact]
         public void InitFilterTest()
         {
-            _dataProvider.Received(1).AddConsumer(_filter);
+            var dataProvider = Substitute.For<IDataProvider<Client>>();
+
+            var filterConsumer = Substitute.For<IDataConsumer>();
+
+            var filter = new Filter<Client>(_dataProvider, x => true);
+
+            dataProvider.Received(1).AddConsumer(filter);
         }
 
+        [Fact]
+        public void WhenFilterMatches()
+        {
+            var dataProvider = Substitute.For<IDataProvider<Client>>();
 
-        [Test]
+            var filterConsumer = Substitute.For<IDataConsumer>();
+
+            var filter = new Filter<Client>(_dataProvider, x => x.Id > 2);
+
+            var field =Substitute.For<IField>();
+
+            var dataProviderSchema = Substitute.For<ISchema>();
+
+            dataProviderSchema.GetField<int>("Id").Returns(field);
+            
+            filter.OnSchema(dataProviderSchema);
+
+            filter.OnAdd(new List<int> { 1, 2 });
+
+        }
+
+        [Fact]
         public void ChangeFilterTest()
         {
             _dataProvider.ClearReceivedCalls();
@@ -58,24 +82,24 @@ namespace Projector.Data.Test.Filter
             _dataProvider.Received(1).AddConsumer(_filter);
         }
 
-        [Test]
+        [Fact]
         public void FilterAsProviderTest()
         {
             // set up
             var filteredIds = new List<int>();
-            _filterConsumer.OnAdd(Arg.Do<IList<int>>(ids => filteredIds.AddRange(ids)));
+            _filterConsumer.OnAdd(Arg.Do<IReadOnlyCollection<int>>(filteredIds.AddRange));
 
             // call
             _filter.AddConsumer(_filterConsumer);
 
             // check
             _filterConsumer.Received(1).OnSchema(_dataProviderSchema);
-            Assert.AreEqual(10, filteredIds.Count);
+            Assert.Equal(10, filteredIds.Count);
 
 
             _dataProvider.ClearReceivedCalls();
             // set up
-            _filterConsumer.OnDelete(Arg.Do<IList<int>>(ids =>
+            _filterConsumer.OnDelete(Arg.Do<IReadOnlyCollection<int>>(ids =>
             {
                 foreach (var id in ids)
                 {
@@ -90,9 +114,7 @@ namespace Projector.Data.Test.Filter
             _dataProviderUnsubscriber.Received(1).Dispose();
             _dataProvider.Received(1).AddConsumer(_filter);
 
-            Assert.AreEqual(0, filteredIds.Count);
+            Assert.Equal(0, filteredIds.Count);
         }
-
-
     }
 }

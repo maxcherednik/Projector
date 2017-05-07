@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Projector.Data.Tables
 {
@@ -7,7 +8,7 @@ namespace Projector.Data.Tables
 
         private readonly Dictionary<string, int> _keyToIdIndex = new Dictionary<string, int>();
 
-
+        public IReadOnlyCollection<int> RowIds => throw new NotImplementedException();
 
         public KeyedTable(int capacity)
         {

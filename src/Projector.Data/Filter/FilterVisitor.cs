@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -9,29 +10,33 @@ namespace Projector.Data.Filter
         private ParameterExpression _schemaParameter;
         private ParameterExpression _idParameter;
         private MethodInfo _getFieldMethodInfo;
+        private HashSet<string> _usedFieldNames;
 
         public FilterVisitor()
         {
             _schemaParameter = Expression.Parameter(typeof(ISchema), "schema");
             _idParameter = Expression.Parameter(typeof(int), "id");
 
-            _getFieldMethodInfo = typeof(ISchema).GetMethod("GetField");
+            _getFieldMethodInfo = typeof(ISchema).GetTypeInfo().GetDeclaredMethod("GetField");
+
+            _usedFieldNames = new HashSet<string>();
         }
-        public Func<ISchema, int, bool> GenerateFilter<Tsource>(Expression<Func<Tsource, bool>> filterExpression)
+        public Tuple<HashSet<string>, Func<ISchema, int, bool>> GenerateFilter<Tsource>(Expression<Func<Tsource, bool>> filterExpression)
         {
             var newexpression = (Expression<Func<ISchema, int, bool>>)Visit(filterExpression);
 
-            return newexpression.Compile();
+            return Tuple.Create(_usedFieldNames, newexpression.Compile());
         }
 
         protected override Expression VisitMember(MemberExpression node)
         {
+            _usedFieldNames.Add(node.Member.Name);
             var genericMethodInfo = _getFieldMethodInfo.MakeGenericMethod(node.Type);
-            var fieldAccessExpression = Expression.Call(_schemaParameter, genericMethodInfo, _idParameter, Expression.Constant(node.Member.Name, typeof(string)));
+            var fieldAccessExpression = Expression.Call(_schemaParameter, genericMethodInfo, Expression.Constant(node.Member.Name, typeof(string)));
 
-            var valueAccessMemberInfo = genericMethodInfo.ReturnType.GetMember("Value")[0];
+            var valueAccessMemberInfo = genericMethodInfo.ReturnType.GetTypeInfo().GetDeclaredMethod("GetValue");
 
-            var valueAccessExpression = Expression.MakeMemberAccess(fieldAccessExpression, valueAccessMemberInfo);
+            var valueAccessExpression = Expression.Call(fieldAccessExpression, valueAccessMemberInfo, _idParameter);
             return valueAccessExpression;
         }
 
