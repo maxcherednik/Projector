@@ -1,0 +1,23 @@
+install:
+  - choco install gitversion.portable -pre -y
+
+skip_tags: true
+
+before_build:
+  - ps: gitversion /l console /output buildserver  
+  - ps: $env:GitVersion_InformationalVersion = $env:GitVersion_InformationalVersion.Replace('/', '-');
+  - dotnet restore .\src\Projector.sln
+
+configuration: Release
+
+build_script:
+  - dotnet build .\src\Projector.sln
+
+test_script:
+  - dotnet test .\src\Projector.Data.Test/Projector.Data.Test.csproj
+
+after_build:
+  - dotnet pack --no-build .\src\Projector.Data -c Release /p:PackageVersion="%GitVersion_NuGetVersion%"
+
+artifacts:
+  - path: '**\*.nupkg'
