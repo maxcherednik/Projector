@@ -50,7 +50,7 @@ Good choice! Keep it simple!
 What if I told you this kind of change happens every 30 seconds, 15 seconds, 1 seconds.
 We would see a picture like this:
 
-![GC pressure](https://github.com/maxcherednik/Projector/blob/readmeupdate/documentation/gc_pressure.png)
+![GC pressure](documentation/gc_pressure.png)
 
 Doing so we might end up just cleaning and not doing anything useful.
 
@@ -89,6 +89,6 @@ So let's see what has changed:
 
 And here is the memory footprint from the same test as was done with the original example:
 
-![GC pressure](https://github.com/maxcherednik/Projector/blob/readmeupdate/documentation/projector_memory.png)
+![GC pressure](documentation/projector_memory.png)
 
 A lot more information and documentation are available in the [wiki](https://github.com/maxcherednik/Projector/wiki).
