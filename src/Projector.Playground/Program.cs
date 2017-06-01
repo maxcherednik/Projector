@@ -23,7 +23,7 @@ namespace Projector.Playground
                 .InnerJoin(personAddressTable, p => p.Name,
                                                     pa => pa.Name1,
                                                     (p, pa) => new { p.Name, p.Age, p.Time, p.Time1, pa.Name1, pa.HouseNumber })
-                       
+
                        .Select(person => new
                        {
                            Age1 = person.Age,
@@ -43,25 +43,25 @@ namespace Projector.Playground
             for (int i = 0; i < elementCount; i++)
             {
                 var rowId1 = personTable.NewRow();
-                personTable.Set(rowId1, "Age", i);
-                personTable.Set(rowId1, "Name", "Max");
-                personTable.Set<long>(rowId1, "Time", 125000 + i);
-                personTable.Set<long>(rowId1, "Time1", i);
+                personTable.Set(rowId1, p => p.Age, i);
+                personTable.Set(rowId1, p => p.Name, "Max");
+                personTable.Set(rowId1, p => p.Time, 125000 + i);
+                personTable.Set(rowId1, p => p.Time1, i);
 
-                if(i%100 ==0)
+                if (i % 100 == 0)
                 {
                     personTable.FireChanges();
                 }
             }
-            
+
 
             var rowId = personAddressTable.NewRow();
-            personAddressTable.Set(rowId, "Name1", "Max");
-            personAddressTable.Set(rowId, "HouseNumber", 2444);
+            personAddressTable.Set(rowId, pa => pa.Name1, "Max");
+            personAddressTable.Set(rowId, pa => pa.HouseNumber, 2444);
 
             rowId = personAddressTable.NewRow();
-            personAddressTable.Set(rowId, "Name1", "Anna");
-            personAddressTable.Set(rowId, "HouseNumber", 342);
+            personAddressTable.Set(rowId, pa => pa.Name1, "Anna");
+            personAddressTable.Set(rowId, pa => pa.HouseNumber, 342);
 
             personAddressTable.FireChanges();
 
@@ -80,11 +80,11 @@ namespace Projector.Playground
 
                 for (int i = 0; i < 1000; i++)
                 {
-                    var rndRowId =rnd.Next(0, elementCount);
+                    var rndRowId = rnd.Next(0, elementCount);
 
-                    personTable.Set(rndRowId, "Age", age);
+                    personTable.Set(rndRowId, p => p.Age, age);
                 }
-                
+
                 personTable.FireChanges();
 
                 stopwatch.Stop();
