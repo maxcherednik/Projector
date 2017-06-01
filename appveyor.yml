@@ -6,6 +6,10 @@ skip_tags: true
 before_build:
   - ps: gitversion /l console /output buildserver  
   - ps: $env:GitVersion_InformationalVersion = $env:GitVersion_InformationalVersion.Replace('/', '-');
+  - ps: $env:CustomVersion = "$env:GitVersion_InformationalVersion.$env:APPVEYOR_BUILD_NUMBER"
+  - ps: $env:CustomFileVersion = "$env:GitVersion_MajorMinorPatch.$env:APPVEYOR_BUILD_NUMBER"
+  - ps: Write-Host $env:CustomVersion
+  - ps: Write-Host $env:CustomFileVersion 
   - dotnet restore .\src\Projector.sln
 
 configuration: Release

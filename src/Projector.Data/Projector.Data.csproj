@@ -3,13 +3,13 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard1</TargetFrameworks>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
-    <Version>$(GitVersion_InformationalVersion).$(APPVEYOR_BUILD_NUMBER)</Version>
+    <Version>$(CustomVersion)</Version>
     <Authors>Maxim Cherednik</Authors>
     <PackageProjectUrl>https://github.com/maxcherednik/Projector</PackageProjectUrl>
     <RepositoryUrl>https://github.com/maxcherednik/Projector</RepositoryUrl>
     <PackageTags>stream linq projection</PackageTags>
     <AssemblyVersion>$(GitVersion_AssemblySemVer)</AssemblyVersion>
-    <FileVersion>$(GitVersion_MajorMinorPatch).$(APPVEYOR_BUILD_NUMBER)</FileVersion>
+    <FileVersion>$(CustomFileVersion)</FileVersion>
   </PropertyGroup>
 
 </Project>
