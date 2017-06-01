@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System;
+using System.Linq.Expressions;
 
 namespace Projector.Data.Tables
 {
@@ -23,27 +24,21 @@ namespace Projector.Data.Tables
 
             var schema = new Schema(capacity);
 
+            var method = typeof(Schema).GetRuntimeMethod("CreateField", new[] { typeof(string) });
+
             foreach (var propInfoItem in propInfos)
             {
-                if (propInfoItem.PropertyType == typeof(string))
-                {
-                    schema.CreateField<string>(propInfoItem.Name);
-                }
-                else if (propInfoItem.PropertyType == typeof(int))
-                {
-                    schema.CreateField<int>(propInfoItem.Name);
-                }
-                else if (propInfoItem.PropertyType == typeof(long))
-                {
-                    schema.CreateField<long>(propInfoItem.Name);
-                }
-                else
-                {
-                    throw new InvalidOperationException("Type: " + propInfoItem.PropertyType + " is not supported");
-                }
+                var generic = method.MakeGenericMethod(propInfoItem.PropertyType);
+                generic.Invoke(schema, new[] { propInfoItem.Name });
             }
 
             return schema;
+        }
+
+        public void Set<TMember>(int rowIndex, Expression<Func<T, TMember>> field, TMember value)
+        {
+            var memberAccess = (MemberExpression)field.Body;
+            Set(rowIndex, memberAccess.Member.Name, value);
         }
     }
 }
