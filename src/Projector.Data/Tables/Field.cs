@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace Projector.Data.Tables
 {
-    public class Field<TData> : IField<TData>, IWritableField<TData>
+    public class Field<TData> : IWritableField<TData>
     {
-        private List<TData> _data;
+        private readonly List<TData> _data;
 
         public Field(List<TData> data, string name)
         {

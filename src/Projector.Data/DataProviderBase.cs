@@ -9,7 +9,7 @@ namespace Projector.Data
         protected HashSet<int> CurrentUpdatedIds;
         protected HashSet<int> CurrentRemovedIds;
 
-        private HashSet<IField> _updatedFields;
+        private readonly HashSet<IField> _updatedFields;
 
         public DataProviderBase()
         {
@@ -89,7 +89,13 @@ namespace Projector.Data
 
         public IDisconnectable AddConsumer(IDataConsumer consumer)
         {
-            consumer.OnSchema(Schema);
+            OnAdd += consumer.OnAdd;
+            OnDelete += consumer.OnDelete;
+            OnUpdate += consumer.OnUpdate;
+            OnSchema += consumer.OnSchema;
+            OnSyncPoint += consumer.OnSyncPoint;
+
+            FireOnSchema(Schema);
 
             if (RowIds.Count > 0)
             {
@@ -97,12 +103,6 @@ namespace Projector.Data
             }
 
             consumer.OnSyncPoint();
-
-            OnAdd += consumer.OnAdd;
-            OnDelete += consumer.OnDelete;
-            OnUpdate += consumer.OnUpdate;
-            OnSchema += consumer.OnSchema;
-            OnSyncPoint += consumer.OnSyncPoint;
 
             return new Disconnectable(this, consumer);
         }

@@ -7,10 +7,10 @@ namespace Projector.Data.Filter
 {
     public class FilterVisitor : ExpressionVisitor
     {
-        private ParameterExpression _schemaParameter;
-        private ParameterExpression _idParameter;
-        private MethodInfo _getFieldMethodInfo;
-        private HashSet<string> _usedFieldNames;
+        private readonly ParameterExpression _schemaParameter;
+        private readonly ParameterExpression _idParameter;
+        private readonly MethodInfo _getFieldMethodInfo;
+        private readonly HashSet<string> _usedFieldNames;
 
         public FilterVisitor()
         {
@@ -21,7 +21,7 @@ namespace Projector.Data.Filter
 
             _usedFieldNames = new HashSet<string>();
         }
-        public Tuple<HashSet<string>, Func<ISchema, int, bool>> GenerateFilter<Tsource>(Expression<Func<Tsource, bool>> filterExpression)
+        public Tuple<HashSet<string>, Func<ISchema, int, bool>> GenerateFilter<TSource>(Expression<Func<TSource, bool>> filterExpression)
         {
             var newexpression = (Expression<Func<ISchema, int, bool>>)Visit(filterExpression);
 

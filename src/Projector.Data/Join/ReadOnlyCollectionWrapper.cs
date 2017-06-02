@@ -5,7 +5,7 @@ namespace Projector.Data.Join
 {
     class ReadOnlyCollectionWrapper<T> : IReadOnlyCollection<T>
     {
-        private ICollection<T> _sourceCollection;
+        private readonly ICollection<T> _sourceCollection;
 
         public ReadOnlyCollectionWrapper(ICollection<T> sourceCollection)
         {

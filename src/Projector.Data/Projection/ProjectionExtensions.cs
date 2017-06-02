@@ -5,9 +5,9 @@ namespace Projector.Data.Projection
 {
     public static class ProjectionExtensions
     {
-        public static Projection<Tsource, TDest> Select<Tsource, TDest> (this IDataProvider<Tsource> source, Expression<Func<Tsource, TDest>> transformerExpression)
+        public static Projection<TSource, TDest> Select<TSource, TDest> (this IDataProvider<TSource> source, Expression<Func<TSource, TDest>> transformerExpression)
         {
-            return new Projection<Tsource, TDest> (source, transformerExpression);
+            return new Projection<TSource, TDest> (source, transformerExpression);
         }
     }
 }

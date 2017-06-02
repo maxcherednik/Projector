@@ -8,13 +8,13 @@ namespace Projector.Data.Join
     public class ResultSelectorVisitor : ExpressionVisitor
     {
         private string _currentProjectedName;
-        private ParameterExpression _schemaParameterLeft;
-        private ParameterExpression _idParameterLeft;
-        private ParameterExpression _schemaParameterRight;
-        private ParameterExpression _idParameterRight;
-        private MethodInfo _getFieldMethodInfo;
+        private readonly ParameterExpression _schemaParameterLeft;
+        private readonly ParameterExpression _idParameterLeft;
+        private readonly ParameterExpression _schemaParameterRight;
+        private readonly ParameterExpression _idParameterRight;
+        private readonly MethodInfo _getFieldMethodInfo;
 
-        private Dictionary<ParameterExpression, Tuple<ParameterExpression, ParameterExpression, Dictionary<string, ISet<string>>>> _parametersToScheamMap;
+        private readonly Dictionary<ParameterExpression, Tuple<ParameterExpression, ParameterExpression, Dictionary<string, ISet<string>>>> _parametersToScheamMap;
 
         public ResultSelectorVisitor()
         {

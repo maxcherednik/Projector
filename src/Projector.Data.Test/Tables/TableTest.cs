@@ -8,10 +8,10 @@ namespace Projector.Data.Test.Tables
 {
     public class TableTest
     {
-        private IDataConsumer _mockDataConsumer;
-        private IWritebleSchema _mockSchema;
+        private readonly IDataConsumer _mockDataConsumer;
+        private readonly IWritebleSchema _mockSchema;
 
-        private Table _table;
+        private readonly Table _table;
 
         public TableTest ()
         {

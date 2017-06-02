@@ -16,10 +16,7 @@ namespace Projector.Data.Projection
             _columnList = new List<IField>(_data.Values);
         }
 
-        public IReadOnlyList<IField> Columns
-        {
-            get { return _columnList; }
-        }
+        public IReadOnlyList<IField> Columns => _columnList;
 
         public IField<T> GetField<T>(string name)
         {

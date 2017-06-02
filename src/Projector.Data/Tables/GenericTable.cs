@@ -4,9 +4,9 @@ using System.Linq.Expressions;
 
 namespace Projector.Data.Tables
 {
-    public class Table<T> : Table, IDataProvider<T>
+    public class Table<TSource> : Table, IDataProvider<TSource>
     {
-        public Table(int capacity) : base(CreateSchema<T>(capacity))
+        public Table(int capacity) : base(CreateSchema(capacity))
         {
 
         }
@@ -16,9 +16,9 @@ namespace Projector.Data.Tables
 
         }
 
-        private static Schema CreateSchema<Tsource>(int capacity)
+        private static Schema CreateSchema(int capacity)
         {
-            var t = typeof(Tsource);
+            var t = typeof(TSource);
 
             var propInfos = t.GetTypeInfo().DeclaredProperties;
 
@@ -29,13 +29,13 @@ namespace Projector.Data.Tables
             foreach (var propInfoItem in propInfos)
             {
                 var generic = method.MakeGenericMethod(propInfoItem.PropertyType);
-                generic.Invoke(schema, new[] { propInfoItem.Name });
+                generic.Invoke(schema, new object[] { propInfoItem.Name });
             }
 
             return schema;
         }
 
-        public void Set<TMember>(int rowIndex, Expression<Func<T, TMember>> field, TMember value)
+        public void Set<TMember>(int rowIndex, Expression<Func<TSource, TMember>> field, TMember value)
         {
             var memberAccess = (MemberExpression)field.Body;
             Set(rowIndex, memberAccess.Member.Name, value);

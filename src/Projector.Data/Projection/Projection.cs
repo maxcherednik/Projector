@@ -5,12 +5,12 @@ namespace Projector.Data.Projection
 {
     public class Projection : DataProviderBase, IDataConsumer
     {
-        private IDictionary<string, IField> _projectionFields;
-        private IDictionary<string, ISet<string>> _oldFieldNamesToNewFieldNamesMapping;
+        private readonly IDictionary<string, IField> _projectionFields;
+        private readonly IDictionary<string, ISet<string>> _oldFieldNamesToNewFieldNamesMapping;
 
         private IDisconnectable _subscription;
 
-        private HashSet<IField> _currentUpdatedFields;
+        private readonly HashSet<IField> _currentUpdatedFields;
 
         public Projection(IDataProvider sourceDataProvider, Tuple<IDictionary<string, ISet<string>>, IDictionary<string, IField>> projectionFieldsMeta)
         {

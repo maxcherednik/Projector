@@ -1,5 +1,6 @@
 using NSubstitute;
 using Projector.Data.Projection;
+using Projector.Data.Test.Helpers;
 using Xunit;
 
 namespace Projector.Data.Test.Projection

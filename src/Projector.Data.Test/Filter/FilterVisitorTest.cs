@@ -8,9 +8,9 @@ namespace Projector.Data.Test.Filter
 {
     public class FilterVisitorTest
     {
-        private ISchema _mockSchema;
-        private IField<int> _mockAgeField;
-        private IField<string> _mockNameField;
+        private readonly ISchema _mockSchema;
+        private readonly IField<int> _mockAgeField;
+        private readonly IField<string> _mockNameField;
 
         public FilterVisitorTest()
         {

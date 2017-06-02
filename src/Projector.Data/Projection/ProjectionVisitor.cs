@@ -7,11 +7,11 @@ namespace Projector.Data.Projection
 {
     public class ProjectionVisitor : ExpressionVisitor
     {
-        private ParameterExpression _schemaParameter;
-        private ParameterExpression _idParameter;
-        private MethodInfo _getFieldMethodInfo;
-        private IDictionary<string, IField> _projectedFields;
-        private IDictionary<string, ISet<string>> _oldFieldNamesToNewFieldNamesMapping;
+        private readonly ParameterExpression _schemaParameter;
+        private readonly ParameterExpression _idParameter;
+        private readonly MethodInfo _getFieldMethodInfo;
+        private readonly IDictionary<string, IField> _projectedFields;
+        private readonly IDictionary<string, ISet<string>> _oldFieldNamesToNewFieldNamesMapping;
         private string _currentProjectedName;
         private bool _skip;
 
@@ -25,7 +25,7 @@ namespace Projector.Data.Projection
             _oldFieldNamesToNewFieldNamesMapping = new Dictionary<string, ISet<string>>();
         }
 
-        public Tuple<IDictionary<string, ISet<string>>, IDictionary<string, IField>> GenerateProjection<Tsource, TDest>(Expression<Func<Tsource, TDest>> transformerExpression)
+        public Tuple<IDictionary<string, ISet<string>>, IDictionary<string, IField>> GenerateProjection<TSource, TDest>(Expression<Func<TSource, TDest>> transformerExpression)
         {
             _projectedFields.Clear();
 

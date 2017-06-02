@@ -7,8 +7,6 @@ namespace Projector.Data.GroupBy
     {
         private IDisconnectable _subscription;
 
-        private HashSet<string> _keyFields;
-
         public GroupBy(IDataProvider sourceDataProvider)
         {
             _subscription = sourceDataProvider.AddConsumer(this);

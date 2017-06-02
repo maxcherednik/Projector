@@ -10,20 +10,20 @@ namespace Projector.Data.Filter
         private HashSet<string> _fieldsUsedInFilter;
 
         private IDisconnectable _subscription;
-        private IDataProvider _sourceDataProvider;
 
-        private HashSet<int> _usedRowIds;
-        private IReadOnlyCollection<int> _parentRowIds;
+        private readonly HashSet<int> _usedRowIds;
+
+        private readonly IReadOnlyCollection<int> _parentRowIds;
 
         public Filter(IDataProvider sourceDataProvider, Tuple<HashSet<string>, Func<ISchema, int, bool>> filterCriteriaMeta)
         {
             _parentRowIds = sourceDataProvider.RowIds;
             _usedRowIds = new HashSet<int>();
+
             SetRowIds((IReadOnlyCollection<int>)_usedRowIds);
 
             _fieldsUsedInFilter = filterCriteriaMeta.Item1;
             _filterCriteria = filterCriteriaMeta.Item2;
-            _sourceDataProvider = sourceDataProvider;
             _subscription = sourceDataProvider.AddConsumer(this);
         }
 
@@ -96,7 +96,7 @@ namespace Projector.Data.Filter
                         _usedRowIds.Add(id);
                         AddId(id);
                     }
-                    else if (usedBefore && usedAfter)
+                    else if (usedBefore)
                     {
                         UpdateId(id);
                         wasUpdated = true;

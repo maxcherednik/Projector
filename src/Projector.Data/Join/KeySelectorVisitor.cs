@@ -7,15 +7,15 @@ namespace Projector.Data.Join
 {
     public class KeySelectorVisitor<TLeft, TRight, TKey> : ExpressionVisitor
     {
-        private Expression<Func<TLeft, TKey>> _leftKeySelector;
-        private Expression<Func<TRight, TKey>> _rightKeySelector;
-        private ParameterExpression _schemaParameter;
-        private ParameterExpression _idParameter;
-        private MethodInfo _getFieldMethodInfo;
+        private readonly Expression<Func<TLeft, TKey>> _leftKeySelector;
+        private readonly Expression<Func<TRight, TKey>> _rightKeySelector;
+        private readonly ParameterExpression _schemaParameter;
+        private readonly ParameterExpression _idParameter;
+        private readonly MethodInfo _getFieldMethodInfo;
 
         private bool _left;
-        private HashSet<string> _leftKeyFieldNames;
-        private HashSet<string> _rightKeyFieldNames;
+        private readonly HashSet<string> _leftKeyFieldNames;
+        private readonly HashSet<string> _rightKeyFieldNames;
 
         public KeySelectorVisitor(Expression<Func<TLeft, TKey>> leftKeySelector, Expression<Func<TRight, TKey>> rightKeySelector)
         {
@@ -55,7 +55,7 @@ namespace Projector.Data.Join
             }
 
             var keyFieldsMeta = new KeyFieldsMeta(_leftKeyFieldNames, _rightKeyFieldNames,
-                                 (ISchema leftSchema, int leftRowid, ISchema rightSchema, int rightRowid) =>
+                                 (leftSchema, leftRowid, rightSchema, rightRowid) =>
                                  {
                                      foreach (var keyFieldMatcher in keyFieldMtchers)
                                      {
@@ -104,9 +104,8 @@ namespace Projector.Data.Join
         {
             var projectedKeyFields = new List<LambdaExpression>();
 
-            for (int i = 0; i < node.Members.Count; i++)
+            for (var i = 0; i < node.Members.Count; i++)
             {
-                var member = node.Members[i];
                 var valueExpression = node.Arguments[i];
                 var typeOfvalue = valueExpression.Type;
 
