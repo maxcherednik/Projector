@@ -14,7 +14,7 @@ namespace Projector.Data.Filter
         public void ChangeFilter(Expression<Func<T, bool>> filterExpression)
         {
             var filter = new FilterVisitor().GenerateFilter(filterExpression);
-            base.ChangeFilter(filter);
+            ChangeFilter(filter);
         }
     }
 }

@@ -9,14 +9,14 @@ namespace Projector.Data.Test.Join
 {
     public class ResultSelectorVisitorTest
     {
-        private ISchema _mockSchemaLeft;
-        private IField<int> _mockAgeField;
-        private IField<string> _mockNameField;
+        private readonly ISchema _mockSchemaLeft;
+        private readonly IField<int> _mockAgeField;
+        private readonly IField<string> _mockNameField;
 
-        private ISchema _mockSchemaRight;
-        private IField<string> _mockStreetField;
-        private IField<int> _mockHouseNumberField;
-        private Dictionary<int, RowMap> _rowMap;
+        private readonly ISchema _mockSchemaRight;
+        private readonly IField<string> _mockStreetField;
+        private readonly IField<int> _mockHouseNumberField;
+        private readonly Dictionary<int, RowMap> _rowMap;
 
         public ResultSelectorVisitorTest()
         {
@@ -58,7 +58,7 @@ namespace Projector.Data.Test.Join
             //call
             Expression<Func<Person, PersonAddress, dynamic>> filterExpression = (person, personAddress) => new
             {
-                Name = person.Name,
+                person.Name,
                 NameAge = person.Name + person.Age,
                 personAddress.Street,
                 NameAddressHouse = person.Name + personAddress.Street + personAddress.HouseNumber

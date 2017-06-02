@@ -10,8 +10,8 @@ namespace Projector.Data.Join
 
     public class KeyFieldMatcher<TKey> : IKeyFieldMatcher
     {
-        private Func<ISchema, int, TKey> _leftKeyAccessor;
-        private Func<ISchema, int, TKey> _rightKeyAccessor;
+        private readonly Func<ISchema, int, TKey> _leftKeyAccessor;
+        private readonly Func<ISchema, int, TKey> _rightKeyAccessor;
 
         public KeyFieldMatcher(Func<ISchema, int, TKey> leftKeyAccessor, Func<ISchema, int, TKey> rightKeyAccessor)
         {

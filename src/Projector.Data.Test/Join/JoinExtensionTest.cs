@@ -1,5 +1,6 @@
 using Projector.Data.Join;
 using Projector.Data.Tables;
+using Projector.Data.Test.Helpers;
 using Xunit;
 
 namespace Projector.Data.Test.Join

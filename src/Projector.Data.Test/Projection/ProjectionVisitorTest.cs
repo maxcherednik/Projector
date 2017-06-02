@@ -8,9 +8,9 @@ namespace Projector.Data.Test.Projection
 {
     public class ProjectionVisitorTest
     {
-        private ISchema _mockSchema;
-        private IField<int> _mockAgeField;
-        private IField<string> _mockNameField;
+        private readonly ISchema _mockSchema;
+        private readonly IField<int> _mockAgeField;
+        private readonly IField<string> _mockNameField;
 
         public ProjectionVisitorTest()
         {

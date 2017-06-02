@@ -6,14 +6,11 @@ namespace Projector.Data.Tables
     {
         private readonly IWritebleSchema _schema;
 
-        private readonly List<int> _idsUpdated;
-
-        private HashSet<int> _usedRowIds;
+        private readonly HashSet<int> _usedRowIds;
 
         public Table(IWritebleSchema schema)
         {
             _usedRowIds = new HashSet<int>();
-            _idsUpdated = new List<int>();
             _schema = schema;
             SetSchema(_schema);
             SetRowIds((IReadOnlyCollection<int>)_usedRowIds);
@@ -23,6 +20,7 @@ namespace Projector.Data.Tables
         {
             var writableField = _schema.GetWritableField<T>(name);
             writableField.SetValue(rowIndex, value);
+
             if (!CurrentAddedIds.Contains(rowIndex))
             {
                 UpdateId(rowIndex);

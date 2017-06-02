@@ -8,13 +8,13 @@ namespace Projector.Data.Test.Filter
 {
     class FilterTest
     {
-        private Filter<Client> _filter;
-        private IDataProvider<Client> _dataProvider;
-        private IDisconnectable _dataProviderUnsubscriber;
-        private ISchema _dataProviderSchema;
-        private List<int> _ids;
+        private readonly Filter<Client> _filter;
+        private readonly IDataProvider<Client> _dataProvider;
+        private readonly IDisconnectable _dataProviderUnsubscriber;
+        private readonly ISchema _dataProviderSchema;
+        private readonly List<int> _ids;
 
-        private IDataConsumer _filterConsumer;
+        private readonly IDataConsumer _filterConsumer;
 
         public FilterTest()
         {

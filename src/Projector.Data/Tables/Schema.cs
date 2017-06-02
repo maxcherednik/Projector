@@ -22,10 +22,7 @@ namespace Projector.Data.Tables
             _freeRows = new HashSet<int>();
         }
 
-        public IReadOnlyList<IField> Columns
-        {
-            get { return _columnList; }
-        }
+        public IReadOnlyList<IField> Columns => _columnList;
 
         public IField<T> GetField<T>(string name)
         {

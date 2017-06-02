@@ -9,8 +9,8 @@ namespace Projector.Playground
     {
         private int _rowCounter;
         private ISchema _schema;
-        private bool _printDetailes;
-        private StringBuilder _stringBuilder;
+        private readonly bool _printDetailes;
+        private readonly StringBuilder _stringBuilder;
 
         public ConsoleConsumer(bool printDetailes)
         {

@@ -1,6 +1,7 @@
 using System.Linq;
 using NSubstitute;
 using Projector.Data.GroupBy;
+using Projector.Data.Test.Helpers;
 using Xunit;
 
 namespace Projector.Data.Test.GroupBy

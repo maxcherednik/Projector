@@ -1,5 +1,6 @@
 using System.Linq;
 using Projector.Data.Tables;
+using Projector.Data.Test.Helpers;
 using Xunit;
 
 namespace Projector.Data.Test.Tables

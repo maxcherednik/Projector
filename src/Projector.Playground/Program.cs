@@ -3,16 +3,16 @@ using System;
 using Projector.Data.Join;
 using Projector.Data.Projection;
 using System.Diagnostics;
-using Projector.Data.Filter;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Projector.Playground
 {
-    class Program
+    internal class Program
     {
         static void Main(string[] args)
         {
-            var elementCount = 1000000;
+            const int elementCount = 1000000;
 
             var personTable = new Table<Person>(elementCount);
 
@@ -35,12 +35,9 @@ namespace Projector.Playground
                        .AddConsumer(new ConsoleConsumer(true));
 
 
-
-
-
             Console.WriteLine("------------------------Add-----------------");
             // add
-            for (int i = 0; i < elementCount; i++)
+            for (var i = 0; i < elementCount; i++)
             {
                 var rowId1 = personTable.NewRow();
                 personTable.Set(rowId1, p => p.Age, i);
@@ -65,38 +62,42 @@ namespace Projector.Playground
 
             personAddressTable.FireChanges();
 
-            var rnd = new Random();
-            Console.WriteLine("------------------------Update-----------------");
-            var age = 0;
-            Console.WriteLine(" Press Enter key to continue...");
-            while (true)
+            var cancelTokenSource = new CancellationTokenSource();
+
+            var task = Task.Run(() =>
             {
-                var stopwatch = Stopwatch.StartNew();
-
-
-                //personAddressTable.Set(0, "SomeNotNeededField", age);
-                //personAddressTable.Set(0, "HouseNumber", age);
-                //personAddressTable.FireChanges();
-
-                for (int i = 0; i < 1000; i++)
+                var rnd = new Random();
+                Console.WriteLine("------------------------Update-----------------");
+                var age = 0;
+                Console.WriteLine(" Press Enter key to continue...");
+                while (!cancelTokenSource.Token.IsCancellationRequested)
                 {
-                    var rndRowId = rnd.Next(0, elementCount);
+                    var stopwatch = Stopwatch.StartNew();
 
-                    personTable.Set(rndRowId, p => p.Age, age);
+                    for (var i = 0; i < 1000; i++)
+                    {
+                        var rndRowId = rnd.Next(0, elementCount);
+
+                        personTable.Set(rndRowId, p => p.Age, age);
+                    }
+
+                    personTable.FireChanges();
+
+                    stopwatch.Stop();
+                    Console.WriteLine(stopwatch.Elapsed + " Press Enter key to continue...");
+                    age++;
+
+                    Thread.Sleep(100);
                 }
-
-                personTable.FireChanges();
-
-                stopwatch.Stop();
-                Console.WriteLine(stopwatch.Elapsed + " Press Enter key to continue...");
-                age++;
-
-                Thread.Sleep(100);
-            }
+            }, cancelTokenSource.Token);
 
 
             Console.WriteLine("Finished. Press any key to close...");
             Console.ReadKey();
+
+            cancelTokenSource.Cancel();
+
+            task.Wait();
         }
 
 

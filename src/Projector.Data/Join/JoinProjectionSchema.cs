@@ -6,7 +6,7 @@ namespace Projector.Data.Join
     class JoinProjectionSchema : ISchema
     {
         private readonly IDictionary<string, IField> _data;
-        private IDictionary<int, RowMap> _joinedRowIdsToLeftRightRowIdsMapping;
+        private readonly IDictionary<int, RowMap> _joinedRowIdsToLeftRightRowIdsMapping;
 
         public JoinProjectionSchema(IDictionary<string, IField> projectionFields, IDictionary<int, RowMap> joinedRowIdsToLeftRightRowIdsMapping)
         {

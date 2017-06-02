@@ -28,7 +28,7 @@ namespace Projector.Data
     /// Generic representation of the IDataProvider.
     /// Used for type inference
     /// </summary>
-    public interface IDataProvider<T> : IDataProvider
+    public interface IDataProvider<TSource> : IDataProvider
     {
 
     }

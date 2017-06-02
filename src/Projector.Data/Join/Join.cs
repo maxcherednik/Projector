@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace Projector.Data.Join
 {
-    public class Join : DataProviderBase, IDataProvider
+    public class Join : DataProviderBase
     {
         private readonly ChangeTracker _leftChangeTracker;
         private readonly ChangeTracker _rightChangeTracker;
@@ -21,13 +21,13 @@ namespace Projector.Data.Join
 
         private readonly HashSet<int> _freeRows;
 
-        private HashSet<IField> _currentUpdatedFields;
+        private readonly HashSet<IField> _currentUpdatedFields;
 
-        private Dictionary<int, RowMap> _joinedRowIdsToLeftRightRowIdsMapping;
+        private readonly Dictionary<int, RowMap> _joinedRowIdsToLeftRightRowIdsMapping;
 
-        private JoinProjectedFieldsMeta _projectionFieldsMeta;
+        private readonly JoinProjectedFieldsMeta _projectionFieldsMeta;
 
-        private KeyFieldsMeta _keyFieldsMeta;
+        private readonly KeyFieldsMeta _keyFieldsMeta;
 
         public Join(IDataProvider leftSource,
                     IDataProvider rightSource,
@@ -184,8 +184,6 @@ namespace Projector.Data.Join
 
         private void ProcessOnAdd(IReadOnlyCollection<int> ids, bool left)
         {
-            var allLeftIds = left ? _allLeftRowIds : _allRightRowIds;
-
             var outerIds = left ? _allRightRowIds : _allLeftRowIds;
 
             foreach (var id in ids)
@@ -208,7 +206,6 @@ namespace Projector.Data.Join
         {
             var leftRowIdToJoinedRowIdMapping = left ? _leftRowIdToJoinedRowIdMapping : _rightRowIdToJoinedRowIdMapping;
             var rightRowIdToJoinedRowIdMapping = left ? _rightRowIdToJoinedRowIdMapping : _leftRowIdToJoinedRowIdMapping;
-            var allLeftIds = left ? _allLeftRowIds : _allRightRowIds;
 
             foreach (var id in ids)
             {
