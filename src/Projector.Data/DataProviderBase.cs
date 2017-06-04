@@ -11,12 +11,23 @@ namespace Projector.Data
 
         private readonly HashSet<IField> _updatedFields;
 
+        private readonly ReadOnlyCollectionWrapper<int> _currentAddedIdsReadOnlyCollection;
+        private readonly ReadOnlyCollectionWrapper<int> _currentUpdatedIdsReadOnlyCollection;
+        private readonly ReadOnlyCollectionWrapper<int> _currentRemovedIdsReadOnlyCollection;
+        private readonly ReadOnlyCollectionWrapper<IField> _updatedFieldsReadOnlyCollection;
+
         public DataProviderBase()
         {
             CurrentAddedIds = new HashSet<int>();
             CurrentUpdatedIds = new HashSet<int>();
             CurrentRemovedIds = new HashSet<int>();
             _updatedFields = new HashSet<IField>();
+
+            _currentAddedIdsReadOnlyCollection = new ReadOnlyCollectionWrapper<int>(CurrentAddedIds);
+            _currentUpdatedIdsReadOnlyCollection = new ReadOnlyCollectionWrapper<int>(CurrentUpdatedIds);
+            _currentRemovedIdsReadOnlyCollection = new ReadOnlyCollectionWrapper<int>(CurrentRemovedIds);
+            _updatedFieldsReadOnlyCollection = new ReadOnlyCollectionWrapper<IField>(_updatedFields);
+
         }
 
         protected void SetRowIds(IReadOnlyCollection<int> usedRowIds)
@@ -62,21 +73,21 @@ namespace Projector.Data
             if (CurrentRemovedIds.Count > 0)
             {
                 thereWereChanges = true;
-                FireOnDelete((IReadOnlyCollection<int>)CurrentRemovedIds);
+                FireOnDelete(_currentRemovedIdsReadOnlyCollection);
                 CurrentRemovedIds.Clear();
             }
 
             if (CurrentAddedIds.Count > 0)
             {
                 thereWereChanges = true;
-                FireOnAdd((IReadOnlyCollection<int>)CurrentAddedIds);
+                FireOnAdd(_currentAddedIdsReadOnlyCollection);
                 CurrentAddedIds.Clear();
             }
 
             if (CurrentUpdatedIds.Count > 0)
             {
                 thereWereChanges = true;
-                FireOnUpdate((IReadOnlyCollection<int>)CurrentUpdatedIds, (IReadOnlyCollection<IField>)_updatedFields);
+                FireOnUpdate(_currentUpdatedIdsReadOnlyCollection, _updatedFieldsReadOnlyCollection);
                 CurrentUpdatedIds.Clear();
                 _updatedFields.Clear();
             }

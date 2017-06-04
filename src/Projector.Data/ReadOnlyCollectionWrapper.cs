@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
-namespace Projector.Data.Join
+namespace Projector.Data
 {
     class ReadOnlyCollectionWrapper<T> : IReadOnlyCollection<T>
     {
