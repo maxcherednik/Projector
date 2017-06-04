@@ -77,20 +77,19 @@ namespace Projector.Data.Join
             {
                 return GenerateFieldAccessorForAnonymousType((NewExpression)keySelecter.Body);
             }
-            else if (keySelecter.Body.NodeType == ExpressionType.MemberInit)
+
+            if (keySelecter.Body.NodeType == ExpressionType.MemberInit)
             {
                 return GenerateFieldAccessorForConcreteType((MemberInitExpression)keySelecter.Body);
             }
-            else
-            {
-                var node = keySelecter.Body;
-                var typeOfvalue = node.Type;
 
-                return new List<LambdaExpression>
+            var node = keySelecter.Body;
+            var typeOfvalue = node.Type;
+
+            return new List<LambdaExpression>
                 {
-                     GenerateField(typeOfvalue, node)
+                    GenerateField(typeOfvalue, node)
                 };
-            }
         }
 
         private LambdaExpression GenerateField(Type typeOfValue, Expression expression)

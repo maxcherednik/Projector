@@ -57,22 +57,23 @@ namespace Projector.Data.Tables
             {
                 var oldRowIndex = _freeRows.First();
                 _freeRows.Remove(oldRowIndex);
+
                 foreach (var writableField in _columnList)
                 {
                     writableField.CleanOldValue(oldRowIndex);
                 }
+
                 return oldRowIndex;
             }
-            else
-            {
-                _currentRowIndex++;
-                foreach (var writableField in _columnList)
-                {
-                    writableField.EnsureCapacity(_currentRowIndex);
-                }
 
-                return _currentRowIndex;
+            _currentRowIndex++;
+
+            foreach (var writableField in _columnList)
+            {
+                writableField.EnsureCapacity(_currentRowIndex);
             }
+
+            return _currentRowIndex;
         }
 
         public void Remove(int rowIndex)
