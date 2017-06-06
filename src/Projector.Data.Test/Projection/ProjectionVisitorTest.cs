@@ -2,6 +2,7 @@
 using Projector.Data.Projection;
 using System;
 using System.Linq.Expressions;
+using Projector.Data.Test.Helpers;
 using Xunit;
 
 namespace Projector.Data.Test.Projection
@@ -9,22 +10,20 @@ namespace Projector.Data.Test.Projection
     public class ProjectionVisitorTest
     {
         private readonly ISchema _mockSchema;
-        private readonly IField<int> _mockAgeField;
-        private readonly IField<string> _mockNameField;
 
         public ProjectionVisitorTest()
         {
             _mockSchema = Substitute.For<ISchema>();
 
-            _mockAgeField = Substitute.For<IField<int>>();
-            _mockAgeField.GetValue(1).Returns(25);
+            var mockAgeField = Substitute.For<IField<int>>();
+            mockAgeField.GetValue(1).Returns(25);
 
-            _mockNameField = Substitute.For<IField<string>>();
-            _mockNameField.GetValue(1).Returns("Max");
+            var mockNameField = Substitute.For<IField<string>>();
+            mockNameField.GetValue(1).Returns("Max");
 
-            _mockSchema.GetField<int>("Age").Returns(_mockAgeField);
+            _mockSchema.GetField<int>("Age").Returns(mockAgeField);
 
-            _mockSchema.GetField<string>("Name").Returns(_mockNameField);
+            _mockSchema.GetField<string>("Name").Returns(mockNameField);
         }
 
         [Fact]
@@ -68,20 +67,6 @@ namespace Projector.Data.Test.Projection
             nameAgeField.SetSchema(_mockSchema);
 
             Assert.Equal("Max25", nameAgeField.GetValue(1));
-        }
-
-        private class Person
-        {
-            public string Name { get; set; }
-
-            public int Age { get; set; }
-        }
-
-        private class PersonProjected
-        {
-            public string Name { get; set; }
-
-            public string NameAge { get; set; }
         }
     }
 }

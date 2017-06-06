@@ -576,25 +576,5 @@ namespace Projector.Data.Test.Join
 
             Assert.Equal(0, testConsumer.CallsReceived);
         }
-
-        private class Person
-        {
-            public string Name { get; set; }
-
-            public int Age { get; set; }
-
-            public int AnotherFieldWhichIsNotInTheResultFieldSet { get; set; }
-        }
-
-        private class PersonAddress
-        {
-            public string Name { get; set; }
-
-            public string Street { get; set; }
-
-            public int HouseNumber { get; set; }
-
-            public int FieldWhichIsNotInTheResultFieldSet { get; set; }
-        }
     }
 }

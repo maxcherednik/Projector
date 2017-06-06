@@ -2,6 +2,7 @@
 using Projector.Data.Filter;
 using System;
 using System.Linq.Expressions;
+using Projector.Data.Test.Helpers;
 using Xunit;
 
 namespace Projector.Data.Test.Filter
@@ -97,12 +98,6 @@ namespace Projector.Data.Test.Filter
 
             _mockSchema.Received(2).GetField<string>("Name");
             _mockSchema.Received(2).GetField<int>("Age");
-        }
-
-        private class Person
-        {
-            public string Name { get; set; }
-            public int Age { get; set; }
         }
     }
 }

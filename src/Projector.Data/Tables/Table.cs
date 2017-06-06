@@ -13,7 +13,7 @@ namespace Projector.Data.Tables
             _usedRowIds = new HashSet<int>();
             _schema = schema;
             SetSchema(_schema);
-            SetRowIds((IReadOnlyCollection<int>)_usedRowIds);
+            SetRowIds(new ReadOnlyCollectionWrapper<int>(_usedRowIds));
         }
 
         public void Set<T>(int rowIndex, string name, T value)

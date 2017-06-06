@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Projector.Data.Join
 {
-    class JoinProjectionSchema : ISchema
+    internal class JoinProjectionSchema : ISchema
     {
         private readonly IDictionary<string, IField> _data;
         private readonly IDictionary<int, RowMap> _joinedRowIdsToLeftRightRowIdsMapping;

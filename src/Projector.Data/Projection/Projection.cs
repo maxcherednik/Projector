@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 namespace Projector.Data.Projection
 {
-    public class Projection : DataProviderBase, IDataConsumer
+    public class Projection : DataProviderBase, IDataConsumer, IDisposable
     {
         private readonly IDictionary<string, IField> _projectionFields;
         private readonly IDictionary<string, ISet<string>> _oldFieldNamesToNewFieldNamesMapping;
 
-        private IDisconnectable _subscription;
+        private readonly IDisconnectable _subscription;
 
         private readonly HashSet<IField> _currentUpdatedFields;
 
@@ -74,6 +74,11 @@ namespace Projector.Data.Projection
             {
                 RemoveId(id);
             }
+        }
+
+        public void Dispose()
+        {
+            _subscription?.Dispose();
         }
     }
 }

@@ -1,8 +1,8 @@
 ﻿using NSubstitute;
 using Projector.Data.Join;
 using System;
-using System.Collections.Generic;
 using System.Linq.Expressions;
+using Projector.Data.Test.Helpers;
 using Xunit;
 
 namespace Projector.Data.Test.Join
@@ -44,11 +44,6 @@ namespace Projector.Data.Test.Join
             mockSchemaRight.GetField<int>("HouseNumber").Returns(mockHouseNumberField);
 
             mockSchemaRight.GetField<string>("Street").Returns(mockStreetField);
-
-            var rowMap = new Dictionary<int, Tuple<int, int>>
-            {
-                { 1, Tuple.Create(125, 13) }
-            };
 
             //call
 
@@ -112,12 +107,7 @@ namespace Projector.Data.Test.Join
             mockSchemaRight.GetField<int>("HouseNumber").Returns(mockHouseNumberField);
 
             mockSchemaRight.GetField<string>("Street").Returns(mockStreetField);
-
-            var rowMap = new Dictionary<int, Tuple<int, int>>
-            {
-                { 1, Tuple.Create(125, 13) }
-            };
-
+            
             //call
 
             Expression<Func<Person, string>> leftKeySelectorExpression = person => "1";
@@ -177,11 +167,6 @@ namespace Projector.Data.Test.Join
             mockSchemaRight.GetField<int>("HouseNumber").Returns(mockHouseNumberField);
 
             mockSchemaRight.GetField<string>("Street").Returns(mockStreetField);
-
-            var rowMap = new Dictionary<int, Tuple<int, int>>
-            {
-                { 1, Tuple.Create(125, 13) }
-            };
 
             //call
 
@@ -250,11 +235,6 @@ namespace Projector.Data.Test.Join
 
             mockSchemaRight.GetField<string>("Street").Returns(mockStreetField);
 
-            var rowMap = new Dictionary<int, Tuple<int, int>>
-            {
-                { 1, Tuple.Create(125, 13) }
-            };
-
             //call
 
             Expression<Func<Person, dynamic>> leftKeySelectorExpression = person => new { ComplexKey = person.Name + person.Age };
@@ -320,12 +300,7 @@ namespace Projector.Data.Test.Join
             mockSchemaRight.GetField<int>("HouseNumber").Returns(mockHouseNumberField);
 
             mockSchemaRight.GetField<string>("Street").Returns(mockStreetField);
-
-            var rowMap = new Dictionary<int, Tuple<int, int>>
-            {
-                { 1, Tuple.Create(125, 13) }
-            };
-
+            
             //call
 
             Expression<Func<Person, ConcreteKey>> leftKeySelectorExpression = person => new ConcreteKey { ComplexKey = person.Name + person.Age.ToString(), SomeNumber = person.Age };
@@ -354,29 +329,5 @@ namespace Projector.Data.Test.Join
             Assert.True(rowMatchMeta.RightKeyFieldNames.Contains("Name"));
             Assert.True(rowMatchMeta.RightKeyFieldNames.Contains("HouseNumber"));
         }
-
-        private class Person
-        {
-            public string Name { get; set; }
-
-            public int Age { get; set; }
-        }
-
-        private class PersonAddress
-        {
-            public string Name { get; set; }
-
-            public string Street { get; set; }
-
-            public int HouseNumber { get; set; }
-        }
-
-        private class ConcreteKey
-        {
-            public string ComplexKey { get; set; }
-
-            public int SomeNumber { get; set; }
-        }
-
     }
 }

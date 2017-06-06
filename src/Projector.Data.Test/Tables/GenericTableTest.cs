@@ -12,13 +12,16 @@ namespace Projector.Data.Test.Tables
         {
             var table = new Table<Person>();
 
-            Assert.Equal(2, table.Schema.Columns.Count);
+            Assert.Equal(3, table.Schema.Columns.Count);
 
             var field1 = table.Schema.Columns.Single(x => x.Name == "Name");
             Assert.Equal(typeof(string), field1.DataType);
 
             var field2 = table.Schema.Columns.Single(x => x.Name == "Age");
             Assert.Equal(typeof(int), field2.DataType);
+
+            var field3 = table.Schema.Columns.Single(x => x.Name == "AnotherFieldWhichIsNotInTheResultFieldSet");
+            Assert.Equal(typeof(int), field3.DataType);
         }
 
         [Fact]

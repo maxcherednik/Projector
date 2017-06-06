@@ -3,6 +3,7 @@ using Projector.Data.Join;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using Projector.Data.Test.Helpers;
 using Xunit;
 
 namespace Projector.Data.Test.Join
@@ -10,12 +11,9 @@ namespace Projector.Data.Test.Join
     public class ResultSelectorVisitorTest
     {
         private readonly ISchema _mockSchemaLeft;
-        private readonly IField<int> _mockAgeField;
-        private readonly IField<string> _mockNameField;
 
         private readonly ISchema _mockSchemaRight;
-        private readonly IField<string> _mockStreetField;
-        private readonly IField<int> _mockHouseNumberField;
+
         private readonly Dictionary<int, RowMap> _rowMap;
 
         public ResultSelectorVisitorTest()
@@ -23,28 +21,28 @@ namespace Projector.Data.Test.Join
             // left schema setup
             _mockSchemaLeft = Substitute.For<ISchema>();
 
-            _mockAgeField = Substitute.For<IField<int>>();
-            _mockAgeField.GetValue(125).Returns(25);
+            var mockAgeField = Substitute.For<IField<int>>();
+            mockAgeField.GetValue(125).Returns(25);
 
-            _mockNameField = Substitute.For<IField<string>>();
-            _mockNameField.GetValue(125).Returns("Max");
+            var mockNameField = Substitute.For<IField<string>>();
+            mockNameField.GetValue(125).Returns("Max");
 
-            _mockSchemaLeft.GetField<int>("Age").Returns(_mockAgeField);
+            _mockSchemaLeft.GetField<int>("Age").Returns(mockAgeField);
 
-            _mockSchemaLeft.GetField<string>("Name").Returns(_mockNameField);
+            _mockSchemaLeft.GetField<string>("Name").Returns(mockNameField);
 
             // right schema setup
             _mockSchemaRight = Substitute.For<ISchema>();
 
-            _mockHouseNumberField = Substitute.For<IField<int>>();
-            _mockHouseNumberField.GetValue(13).Returns(221);
+            var mockHouseNumberField = Substitute.For<IField<int>>();
+            mockHouseNumberField.GetValue(13).Returns(221);
 
-            _mockStreetField = Substitute.For<IField<string>>();
-            _mockStreetField.GetValue(13).Returns("Baker street");
+            var mockStreetField = Substitute.For<IField<string>>();
+            mockStreetField.GetValue(13).Returns("Baker street");
 
-            _mockSchemaRight.GetField<int>("HouseNumber").Returns(_mockHouseNumberField);
+            _mockSchemaRight.GetField<int>("HouseNumber").Returns(mockHouseNumberField);
 
-            _mockSchemaRight.GetField<string>("Street").Returns(_mockStreetField);
+            _mockSchemaRight.GetField<string>("Street").Returns(mockStreetField);
 
             _rowMap = new Dictionary<int, RowMap>
             {
@@ -140,22 +138,5 @@ namespace Projector.Data.Test.Join
 
             Assert.Equal("MaxBaker street221", nameAddressHouseField.GetValue(1));
         }
-
-        private class Person
-        {
-            public string Name { get; set; }
-
-            public int Age { get; set; }
-        }
-
-        private class PersonAddress
-        {
-            public string Name { get; set; }
-
-            public string Street { get; set; }
-
-            public int HouseNumber { get; set; }
-        }
-
     }
 }

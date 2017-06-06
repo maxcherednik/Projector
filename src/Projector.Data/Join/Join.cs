@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Projector.Data.Join
 {
-    public class Join : DataProviderBase
+    public class Join : DataProviderBase, IDisposable
     {
         private readonly ChangeTracker _leftChangeTracker;
         private readonly ChangeTracker _rightChangeTracker;
@@ -31,7 +32,6 @@ namespace Projector.Data.Join
 
         public Join(IDataProvider leftSource,
                     IDataProvider rightSource,
-                    JoinType joinType,
                     KeyFieldsMeta keyFieldsMeta,
                     JoinProjectedFieldsMeta projectionFieldsMeta)
         {
@@ -69,7 +69,7 @@ namespace Projector.Data.Join
             _rightChangeTracker.SetSource(rightSource);
         }
 
-        void _leftChangeTracker_OnSyncPointArrived()
+        private void _leftChangeTracker_OnSyncPointArrived()
         {
             if (_rightSchema != null)
             {
@@ -77,7 +77,7 @@ namespace Projector.Data.Join
             }
         }
 
-        void _leftChangeTracker_OnSchemaArrived(ISchema schema)
+        private void _leftChangeTracker_OnSchemaArrived(ISchema schema)
         {
             _leftSchema = schema;
 
@@ -89,7 +89,7 @@ namespace Projector.Data.Join
             SetSchema(projectedSchema);
         }
 
-        void _leftChangeTracker_OnUpdated(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> updatedFields)
+        private void _leftChangeTracker_OnUpdated(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> updatedFields)
         {
             if (_rightSchema != null)
             {
@@ -166,7 +166,7 @@ namespace Projector.Data.Join
             }
         }
 
-        void _leftChangeTracker_OnDeleted(IReadOnlyCollection<int> ids)
+        private void _leftChangeTracker_OnDeleted(IReadOnlyCollection<int> ids)
         {
             if (_rightSchema != null)
             {
@@ -174,7 +174,7 @@ namespace Projector.Data.Join
             }
         }
 
-        void _leftChangeTracker_OnAdded(IReadOnlyCollection<int> ids)
+        private void _leftChangeTracker_OnAdded(IReadOnlyCollection<int> ids)
         {
             if (_rightSchema != null)
             {
@@ -182,7 +182,7 @@ namespace Projector.Data.Join
             }
         }
 
-        private void ProcessOnAdd(IReadOnlyCollection<int> ids, bool left)
+        private void ProcessOnAdd(IEnumerable<int> ids, bool left)
         {
             var outerIds = left ? _allRightRowIds : _allLeftRowIds;
 
@@ -202,7 +202,7 @@ namespace Projector.Data.Join
             }
         }
 
-        private void ProcessOnDelete(IReadOnlyCollection<int> ids, bool left)
+        private void ProcessOnDelete(IEnumerable<int> ids, bool left)
         {
             var leftRowIdToJoinedRowIdMapping = left ? _leftRowIdToJoinedRowIdMapping : _rightRowIdToJoinedRowIdMapping;
             var rightRowIdToJoinedRowIdMapping = left ? _rightRowIdToJoinedRowIdMapping : _leftRowIdToJoinedRowIdMapping;
@@ -270,30 +270,36 @@ namespace Projector.Data.Join
             return newJoinedRowId;
         }
 
-        void _rightChangeTracker_OnSyncPointArrived()
+        private void _rightChangeTracker_OnSyncPointArrived()
         {
             FireChanges();
         }
 
-        void _rightChangeTracker_OnSchemaArrived(ISchema schema)
+        private void _rightChangeTracker_OnSchemaArrived(ISchema schema)
         {
             _rightSchema = schema;
             ((JoinProjectionSchema)Schema).RightSchema = schema;
         }
 
-        void _rightChangeTracker_OnUpdated(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> updatedFields)
+        private void _rightChangeTracker_OnUpdated(IReadOnlyCollection<int> ids, IReadOnlyCollection<IField> updatedFields)
         {
             ProcessOnUpdated(ids, updatedFields, false);
         }
 
-        void _rightChangeTracker_OnDeleted(IReadOnlyCollection<int> ids)
+        private void _rightChangeTracker_OnDeleted(IReadOnlyCollection<int> ids)
         {
             ProcessOnDelete(ids, false);
         }
 
-        void _rightChangeTracker_OnAdded(IReadOnlyCollection<int> ids)
+        private void _rightChangeTracker_OnAdded(IReadOnlyCollection<int> ids)
         {
             ProcessOnAdd(ids, false);
+        }
+
+        public void Dispose()
+        {
+            _leftChangeTracker?.Dispose();
+            _rightChangeTracker?.Dispose();
         }
     }
 }

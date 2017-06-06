@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Projector.Data.Filter
 {
-    public class Filter : DataProviderBase, IDataConsumer
+    public class Filter : DataProviderBase, IDataConsumer, IDisposable
     {
         private Func<ISchema, int, bool> _filterCriteria;
 
         private HashSet<string> _fieldsUsedInFilter;
 
-        private IDisconnectable _subscription;
+        private readonly IDisconnectable _subscription;
 
         private readonly HashSet<int> _usedRowIds;
 
@@ -20,7 +21,7 @@ namespace Projector.Data.Filter
             _parentRowIds = sourceDataProvider.RowIds;
             _usedRowIds = new HashSet<int>();
 
-            SetRowIds((IReadOnlyCollection<int>)_usedRowIds);
+            SetRowIds(new ReadOnlyCollectionWrapper<int>(_usedRowIds));
 
             _fieldsUsedInFilter = filterCriteriaMeta.Item1;
             _filterCriteria = filterCriteriaMeta.Item2;
@@ -138,17 +139,14 @@ namespace Projector.Data.Filter
             }
         }
 
-        private bool FieldsInUse(IReadOnlyCollection<IField> updatedFields)
+        private bool FieldsInUse(IEnumerable<IField> updatedFields)
         {
-            foreach (var updatedField in updatedFields)
-            {
-                if (_fieldsUsedInFilter.Contains(updatedField.Name))
-                {
-                    return true;
-                }
-            }
+            return updatedFields.Any(updatedField => _fieldsUsedInFilter.Contains(updatedField.Name));
+        }
 
-            return false;
+        public void Dispose()
+        {
+            _subscription?.Dispose();
         }
     }
 }

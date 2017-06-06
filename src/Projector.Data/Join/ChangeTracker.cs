@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Projector.Data.Join
 {
-    class ChangeTracker : IDataConsumer
+    internal class ChangeTracker : IDataConsumer, IDisposable
     {
         private IDisconnectable _subscription;
 
@@ -66,6 +66,11 @@ namespace Projector.Data.Join
         private void FireOnSyncPoint()
         {
             OnSyncPointArrived?.Invoke();
+        }
+
+        public void Dispose()
+        {
+            _subscription?.Dispose();
         }
     }
 }
